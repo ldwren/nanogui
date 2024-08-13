@@ -68,7 +68,7 @@ void ImageView::center() {
 }
 
 void ImageView::reset() {
-    m_scale = 0.f;
+    m_scale = static_cast< float >( m_size.x( ) ) / static_cast< float >(m_image->size( ).x());
     center();
 }
 

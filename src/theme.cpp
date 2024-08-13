@@ -26,7 +26,7 @@ Theme::Theme(NVGcontext *ctx) {
 
     m_window_corner_radius               = 2;
     m_window_header_height               = 30;
-    m_window_drop_shadow_size            = 10;
+    m_window_drop_shadow_size            = 0; // 10
     m_button_corner_radius               = 2;
     m_tab_border_width                   = 0.75f;
     m_tab_inner_margin                   = 5;

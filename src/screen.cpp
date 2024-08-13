@@ -128,8 +128,8 @@ Screen::Screen()
 #endif
 }
 
-Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
-               bool fullscreen, bool depth_buffer, bool stencil_buffer,
+Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable, bool fullscreen, 
+               unsigned int screenNum, bool depth_buffer, bool stencil_buffer,
                bool float_buffer, unsigned int gl_major, unsigned int gl_minor)
     : Widget(nullptr), m_glfw_window(nullptr), m_nvg_context(nullptr),
       m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f), m_caption(caption),
@@ -146,6 +146,7 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
 #elif defined(NANOGUI_USE_GLES)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
     glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
@@ -189,15 +190,31 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
     glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
+    int count = 0;
+    
+    GLFWmonitor** monitors = glfwGetMonitors( &count );
+
+      GLFWmonitor* monitor = nullptr;
+      if ( screenNum > ( count -1 ))
+         monitor = glfwGetPrimaryMonitor( );
+      else
+         monitor = monitors[ screenNum ];
+
     for (int i = 0; i < 2; ++i) {
-        if (fullscreen) {
-            GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-            m_glfw_window = glfwCreateWindow(mode->width, mode->height,
-                                             caption.c_str(), monitor, nullptr);
-        } else {
+        // if (fullscreen) {
+        // 
+        //     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+        //     m_glfw_window = glfwCreateWindow(mode->width, mode->height,
+        //                                      caption.c_str(), monitor, nullptr);
+        // } else {
             m_glfw_window = glfwCreateWindow(size.x(), size.y(),
                                              caption.c_str(), nullptr, nullptr);
+        // }
+
+        if ( fullscreen )
+        {
+           const GLFWvidmode* mode = glfwGetVideoMode( monitor );
+           glfwSetWindowMonitor( m_glfw_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate );
         }
 
         if (m_glfw_window == nullptr && m_float_buffer) {
@@ -730,7 +747,8 @@ void Screen::redraw() {
 }
 
 void Screen::cursor_pos_callback_event(double x, double y) {
-    Vector2i p((int) x, (int) y);
+    
+   Vector2i p((int) x, (int) y);
 
 #if defined(_WIN32) || defined(__linux__) || defined(EMSCRIPTEN)
     p = Vector2i(Vector2f(p) / m_pixel_ratio);
@@ -743,14 +761,16 @@ void Screen::cursor_pos_callback_event(double x, double y) {
         bool ret = false;
         if (!m_drag_active) {
             Widget *widget = find_widget(p);
+
             if (widget != nullptr && widget->cursor() != m_cursor) {
                 m_cursor = widget->cursor();
                 glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
             }
         } else {
-            ret = m_drag_widget->mouse_drag_event(
-                p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos,
-                m_mouse_state, m_modifiers);
+            if ( m_drag_widget->dragable( ) )
+               ret = m_drag_widget->mouse_drag_event(
+                   p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos,
+                   m_mouse_state, m_modifiers);
         }
 
         if (!ret)

@@ -108,6 +108,20 @@ public:
     /// Set the fixed height (see \ref set_fixed_size())
     void set_fixed_height(int height) { m_fixed_size.y() = height; }
 
+    void set_relative_position( Vector2f relative_pos )
+    {
+       m_pos = Vector2i( m_parent->size( ).x( ) * relative_pos.x( ), 
+                                   m_parent->size( ).y( ) * relative_pos.y( ) );
+       m_relative_pos = relative_pos;
+    }
+
+    void set_relative_size( Vector2f relative_size ) 
+    { 
+       m_size = Vector2i( m_parent->size( ).x( ) * relative_size.x( ), 
+                          m_parent->size( ).y( ) * relative_size.y( ) );
+       m_relative_size = relative_size; 
+    }
+
     /// Return whether or not the widget is currently visible (assuming all parents are visible)
     bool visible() const { return m_visible; }
     /// Set whether or not the widget is currently visible (assuming all parents are visible)
@@ -178,6 +192,11 @@ public:
     bool enabled() const { return m_enabled; }
     /// Set whether or not this widget is currently enabled
     void set_enabled(bool enabled) { m_enabled = enabled; }
+
+    /// Return whether or not this widget is currently enabled
+    bool dragable( ) const { return m_dragable; }
+    /// Set whether or not this widget is currently enabled
+    void set_dragable( bool dragable ) { m_dragable = dragable; }
 
     /// Return whether or not this widget is currently focused
     bool focused() const { return m_focused; }
@@ -274,7 +293,8 @@ protected:
     Widget *m_parent;
     ref<Theme> m_theme;
     ref<Layout> m_layout;
-    Vector2i m_pos, m_size, m_fixed_size;
+    Vector2i m_pos, m_relative_pos;
+    Vector2i m_size, m_fixed_size, m_relative_size;
     std::vector<Widget *> m_children;
 
     /**
@@ -289,7 +309,9 @@ protected:
      * accepted.  For example, when ``m_enabled == false``, the state of a
      * CheckBox cannot be changed, or a TextBox will not allow new input.
      */
+    bool m_fill;
     bool m_enabled;
+    bool m_dragable;
     bool m_focused, m_mouse_focus;
     std::string m_tooltip;
     int m_font_size;

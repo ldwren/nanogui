@@ -79,11 +79,12 @@ public:
         const std::string &caption = "Unnamed",
         bool resizable = true,
         bool fullscreen = false,
+        unsigned int screenNum = 0,
         bool depth_buffer = true,
         bool stencil_buffer = true,
         bool float_buffer = false,
         unsigned int gl_major = 3,
-        unsigned int gl_minor = 2
+        unsigned int gl_minor = 2 
     );
 
     /// Release all resources
