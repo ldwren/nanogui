@@ -110,15 +110,15 @@ public:
 
     void set_relative_position( Vector2f relative_pos )
     {
-       m_pos = Vector2i( m_parent->size( ).x( ) * relative_pos.x( ), 
-                                   m_parent->size( ).y( ) * relative_pos.y( ) );
+       m_pos = Vector2i( static_cast<int>(m_parent->size( ).x( ) * relative_pos.x( ) ), 
+                         static_cast<int>(m_parent->size( ).y( ) * relative_pos.y( ) ) );
        m_relative_pos = relative_pos;
     }
 
     void set_relative_size( Vector2f relative_size ) 
     { 
-       m_size = Vector2i( m_parent->size( ).x( ) * relative_size.x( ), 
-                          m_parent->size( ).y( ) * relative_size.y( ) );
+       m_size = Vector2i( static_cast<int>( m_parent->size( ).x( ) * relative_size.x( ) ), 
+                          static_cast<int>( m_parent->size( ).y( ) * relative_size.y( ) ) );
        m_relative_size = relative_size; 
     }
 

@@ -89,7 +89,7 @@ public:
     /// Whether or not this Button is currently pushed.
     bool pushed() const { return m_pushed; }
     /// Sets whether or not this Button is currently pushed.
-    void set_pushed(bool pushed) { m_pushed = pushed;  if ( RadioButton ) m_hilite = pushed; }
+    void set_pushed( bool pushed ) { m_pushed = pushed; if ( m_flags & RadioButton ) m_hilite = pushed; }
 
     /// Return the push callback (for any type of button)
     const std::function<void()> &callback() const { return m_callback; }
