@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <nanogui/vector.h>
 #include <nanogui/object.h>
+#include <nanogui/vector.h>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -26,7 +26,8 @@ NAMESPACE_BEGIN(nanogui)
  *
  * \brief Storage class for basic theme-related properties.
  */
-class NANOGUI_EXPORT Theme : public Object {
+class NANOGUI_EXPORT Theme : public Object
+{
 public:
     Theme(NVGcontext *ctx);
 
@@ -107,10 +108,15 @@ public:
      * (default: intensity=``255``, alpha=``160``; see \ref nanogui::Color::Color(int,int)).
      */
     Color m_text_color;
-    /**
-     * The disable dtext color
-     * (default: intensity=``255``, alpha=``80``; see \ref nanogui::Color::Color(int,int)).
-     */
+   /**
+    * The text color on pushed buttons
+    * (default: intensity=``255``, alpha=``80``; see \ref nanogui::Color::Color(int,int)).
+    */
+   Color m_text_color_hilite;
+   /**
+    * The disable dtext color
+    * (default: intensity=``0``, alpha=``80``; see \ref nanogui::Color::Color(int,int)).
+    */
     Color m_disabled_text_color;
     /**
      * The text shadow color
@@ -151,6 +157,12 @@ public:
      * (default: intensity=``29``, alpha=``255``; see \ref nanogui::Color::Color(int,int)).
      */
     Color m_button_gradient_bot_pushed;
+    Color m_button_gradient_top_hilite;
+    /**
+     * The bottom gradient color for buttons currently pushed
+     * (default: intensity=``29``, alpha=``255``; see \ref nanogui::Color::Color(int,int)).
+     */
+    Color m_button_gradient_bot_hilite;
 
     /* Window colors */
     /**

@@ -18,7 +18,7 @@ NAMESPACE_BEGIN(nanogui)
 
 Button::Button(Widget *parent, const std::string &caption, int icon)
     : Widget(parent), m_caption(caption), m_icon(icon),
-      m_icon_position(IconPosition::LeftCentered), m_pushed(false),
+      m_icon_position(IconPosition::LeftCentered), m_pushed(false), m_hilite( false ), 
       m_flags(NormalButton), m_background_color(Color(0, 0)),
       m_text_color(Color(0, 0)) { }
 
@@ -66,8 +66,10 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
                 if (m_button_group.empty()) {
                     for (auto widget : parent()->children()) {
                         Button *b = dynamic_cast<Button *>(widget);
-                        if (b != this && b && (b->flags() & RadioButton) && b->m_pushed) {
+                        if ( b != this && b && ( b->flags( ) & RadioButton ) && b->m_hilite )
+                        {
                             b->m_pushed = false;
+                            b->m_hilite = false;
                             if (b->m_change_callback)
                                 b->m_change_callback(false);
                         }
@@ -76,6 +78,7 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
                     for (auto b : m_button_group) {
                         if (b != this && (b->flags() & RadioButton) && b->m_pushed) {
                             b->m_pushed = false;
+                            b->m_hilite = false;
                             if (b->m_change_callback)
                                 b->m_change_callback(false);
                         }
@@ -93,8 +96,11 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
                 }
                 dynamic_cast<nanogui::PopupButton*>(this)->popup()->request_focus();
             }
-            if (m_flags & ToggleButton)
+            if ( m_flags & ( ToggleButton | RadioButton ) )
+            {
                 m_pushed = !m_pushed;
+                m_hilite = !m_hilite;
+            }
             else
                 m_pushed = true;
         } else if (m_pushed || (m_flags & MenuButton)) {
@@ -117,7 +123,12 @@ void Button::draw(NVGcontext *ctx) {
     NVGcolor grad_top = m_theme->m_button_gradient_top_unfocused;
     NVGcolor grad_bot = m_theme->m_button_gradient_bot_unfocused;
 
-    if (m_pushed || (m_mouse_focus && (m_flags & MenuButton))) {
+    if ( m_hilite )
+    {
+        grad_top = m_theme->m_button_gradient_top_hilite;
+        grad_bot = m_theme->m_button_gradient_bot_hilite;
+    }
+    else if (m_pushed || (m_mouse_focus && (m_flags & MenuButton))) {
         grad_top = m_theme->m_button_gradient_top_pushed;
         grad_bot = m_theme->m_button_gradient_bot_pushed;
     } else if (m_mouse_focus && m_enabled) {
@@ -173,6 +184,10 @@ void Button::draw(NVGcontext *ctx) {
     if (!m_enabled)
         text_color = m_theme->m_disabled_text_color;
 
+    if ( m_hilite )
+    {
+       text_color = m_theme->m_text_color_hilite;
+    }
     if (m_icon) {
         auto icon = utf8(m_icon);
 

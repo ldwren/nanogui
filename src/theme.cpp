@@ -11,9 +11,9 @@
     BSD-style license that can be found in the LICENSE.txt file.
 */
 
-#include <nanogui/theme.h>
-#include <nanogui/opengl.h>
 #include <nanogui/icons.h>
+#include <nanogui/opengl.h>
+#include <nanogui/theme.h>
 #include <nanogui_resources.h>
 
 NAMESPACE_BEGIN(nanogui)
@@ -42,6 +42,7 @@ Theme::Theme(NVGcontext *ctx) {
     m_border_light                       = Color(92, 255);
     m_border_medium                      = Color(35, 255);
     m_text_color                         = Color(255, 160);
+    m_text_color_hilite   = Color( 0, 160 );
     m_disabled_text_color                = Color(255, 80);
     m_text_color_shadow                  = Color(0, 160);
     m_icon_color                         = m_text_color;
@@ -52,6 +53,8 @@ Theme::Theme(NVGcontext *ctx) {
     m_button_gradient_bot_unfocused      = Color(58, 255);
     m_button_gradient_top_pushed         = Color(41, 255);
     m_button_gradient_bot_pushed         = Color(29, 255);
+    m_button_gradient_top_hilite    = Color( 255, 255, 0, 255 );
+    m_button_gradient_bot_hilite    = Color( 128, 128, 0, 255 );
 
     /* Window-related */
     m_window_fill_unfocused              = Color(43, 230);

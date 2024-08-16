@@ -293,8 +293,8 @@ protected:
     Widget *m_parent;
     ref<Theme> m_theme;
     ref<Layout> m_layout;
-    Vector2i m_pos, m_relative_pos;
-    Vector2i m_size, m_fixed_size, m_relative_size;
+    Vector2i m_pos, m_size, m_fixed_size;
+    Vector2i m_relative_pos, m_relative_size;
     std::vector<Widget *> m_children;
 
     /**
@@ -309,8 +309,8 @@ protected:
      * accepted.  For example, when ``m_enabled == false``, the state of a
      * CheckBox cannot be changed, or a TextBox will not allow new input.
      */
-    bool m_fill;
     bool m_enabled;
+    bool m_fill;
     bool m_dragable;
     bool m_focused, m_mouse_focus;
     std::string m_tooltip;

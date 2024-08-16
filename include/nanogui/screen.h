@@ -84,7 +84,7 @@ public:
         bool stencil_buffer = true,
         bool float_buffer = false,
         unsigned int gl_major = 3,
-        unsigned int gl_minor = 2 
+        unsigned int gl_minor = 2
     );
 
     /// Release all resources

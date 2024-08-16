@@ -89,7 +89,7 @@ public:
     /// Whether or not this Button is currently pushed.
     bool pushed() const { return m_pushed; }
     /// Sets whether or not this Button is currently pushed.
-    void set_pushed(bool pushed) { m_pushed = pushed; }
+    void set_pushed(bool pushed) { m_pushed = pushed;  if ( RadioButton ) m_hilite = pushed; }
 
     /// Return the push callback (for any type of button)
     const std::function<void()> &callback() const { return m_callback; }
@@ -136,6 +136,9 @@ protected:
     /// Whether or not this Button is currently pushed.
     bool m_pushed;
 
+   /// Whether or not this Button is currently pushed.
+   bool m_hilite;
+
     /// The current flags of this button (see \ref nanogui::Button::Flags for options).
     int m_flags;
 
@@ -144,6 +147,9 @@ protected:
 
     /// The color of the caption text of this Button.
     Color m_text_color;
+   Color m_text_color_hilite;
+
+   Color m_icon_color;
 
     /// The callback issued for all types of buttons.
     std::function<void()> m_callback;
