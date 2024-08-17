@@ -81,6 +81,8 @@ Theme::Theme(NVGcontext *ctx) {
     m_text_box_up_icon                  = FA_CHEVRON_UP;
     m_text_box_down_icon                = FA_CHEVRON_DOWN;
 
+    int my_font         = nvgCreateFont( ctx, "consolas", "consola.ttf" );
+
     m_font_sans_regular = nvgCreateFontMem(ctx, "sans", (uint8_t *) roboto_regular_ttf,
                                            roboto_regular_ttf_size, 0);
     m_font_sans_bold = nvgCreateFontMem(ctx, "sans-bold", (uint8_t *) roboto_bold_ttf,
