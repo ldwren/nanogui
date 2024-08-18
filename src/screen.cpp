@@ -195,7 +195,7 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
     GLFWmonitor** monitors = glfwGetMonitors( &count );
 
       GLFWmonitor* monitor = nullptr;
-      if ( screenNum > ( count -1 ))
+      if ( screenNum > static_cast<unsigned int>( ( count -1 )) )
          monitor = glfwGetPrimaryMonitor( );
       else
          monitor = monitors[ screenNum ];
@@ -491,7 +491,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
         throw std::runtime_error("Could not initialize NanoVG!");
 
     m_visible = glfwGetWindowAttrib(window, GLFW_VISIBLE) != 0;
-    set_theme(new Theme(m_nvg_context));
+    set_theme( new Theme(m_nvg_context));
     m_mouse_pos = Vector2i(0);
     m_mouse_state = m_modifiers = 0;
     m_drag_active = false;
