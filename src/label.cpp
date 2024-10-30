@@ -11,7 +11,7 @@
 
 #include <nanogui/label.h>
 #include <nanogui/theme.h>
-#include <nanogui/opengl.h>
+
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -39,11 +39,11 @@ Vector2i Label::preferred_size(NVGcontext *ctx) const {
     nvgFontSize(ctx, font_size());
     if (m_fixed_size.x() > 0) {
         float bounds[4];
-        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvgTextAlign( ctx, m_text_alignH | NVG_ALIGN_TOP );
         nvgTextBoxBounds(ctx, m_pos.x(), m_pos.y(), m_fixed_size.x(), m_caption.c_str(), nullptr, bounds);
         return Vector2i(m_fixed_size.x(), bounds[3] - bounds[1]);
     } else {
-        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+        nvgTextAlign( ctx, m_text_alignH | NVG_ALIGN_MIDDLE );
         return Vector2i(
             nvgTextBounds(ctx, 0, 0, m_caption.c_str(), nullptr, nullptr) + 2,
             font_size()
@@ -56,11 +56,12 @@ void Label::draw(NVGcontext *ctx) {
     nvgFontFace(ctx, m_font.c_str());
     nvgFontSize(ctx, font_size());
     nvgFillColor(ctx, m_color);
+
     if (m_fixed_size.x() > 0) {
-        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+       nvgTextAlign( ctx, m_text_alignH | NVG_ALIGN_TOP );
         nvgTextBox(ctx, m_pos.x(), m_pos.y(), m_fixed_size.x(), m_caption.c_str(), nullptr);
     } else {
-        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+       nvgTextAlign( ctx, m_text_alignH | NVG_ALIGN_MIDDLE );
         nvgText(ctx, m_pos.x(), m_pos.y() + m_size.y() * 0.5f, m_caption.c_str(), nullptr);
     }
 }
