@@ -19,7 +19,7 @@
 /* Uncomment the following definition to draw red bounding
    boxes around widgets (useful for debugging drawing code) */
 
-// #define NANOGUI_SHOW_WIDGET_BOUNDS 1
+#define NANOGUI_SHOW_WIDGET_BOUNDS 1
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -235,35 +235,41 @@ void Widget::request_focus() {
 }
 
 void Widget::draw(NVGcontext *ctx) {
-    #if defined(NANOGUI_SHOW_WIDGET_BOUNDS)
-        nvgStrokeWidth(ctx, 1.0f);
-        nvgBeginPath(ctx);
-        nvgRect(ctx, m_pos.x() - 0.5f, m_pos.y() - 0.5f,
-                m_size.x() + 1, m_size.y() + 1);
-        nvgStrokeColor(ctx, nvgRGBA(255, 0, 0, 255));
-        nvgStroke(ctx);
-    #endif
 
-    if (m_children.empty())
-        return;
+    if ( !m_children.empty( ) )
+   {
 
-    nvgTranslate(ctx, m_pos.x(), m_pos.y());
-    for (auto child : m_children) {
-        if (!child->visible())
+
+      nvgTranslate( ctx, m_pos.x( ), m_pos.y( ) );
+      for ( auto child : m_children )
+      {
+         if ( !child->visible( ) )
             continue;
-        #if !defined(NANOGUI_SHOW_WIDGET_BOUNDS)
-            nvgSave(ctx);
-            nvgIntersectScissor(ctx, child->m_pos.x(), child->m_pos.y(),
-                                child->m_size.x(), child->m_size.y());
-        #endif
+#if !defined( NANOGUI_SHOW_WIDGET_BOUNDS )
+         nvgSave( ctx );
+         nvgIntersectScissor( ctx, child->m_pos.x( ), child->m_pos.y( ), child->m_size.x( ), child->m_size.y( ) );
+#endif
 
-        child->draw(ctx);
+         child->draw( ctx );
 
-        #if !defined(NANOGUI_SHOW_WIDGET_BOUNDS)
-            nvgRestore(ctx);
-        #endif
-    }
-    nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
+#if !defined( NANOGUI_SHOW_WIDGET_BOUNDS )
+         nvgRestore( ctx );
+#endif
+      }
+      nvgTranslate( ctx, -m_pos.x( ), -m_pos.y( ) );
+   }
+
+#if defined( NANOGUI_SHOW_WIDGET_BOUNDS )
+      if ( m_mouse_focus )
+      {
+         nvgStrokeWidth( ctx, 2.0f );
+         nvgBeginPath( ctx );
+         nvgRect( ctx, m_pos.x( ) - 0.5f, m_pos.y( ) - 0.5f, m_size.x( ) + 1, m_size.y( ) + 1 );
+         nvgStrokeColor( ctx, nvgRGBA( 255, 0, 0, 255 ) );
+         nvgStroke( ctx );
+      }
+#endif
+
 }
 
 NAMESPACE_END(nanogui)

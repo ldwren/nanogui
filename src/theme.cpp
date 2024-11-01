@@ -18,11 +18,6 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-int Theme::m_font_sans_regular = -1;
-int Theme::m_font_sans_bold = -1;
-int Theme::m_font_icons = -1;
-int Theme::m_font_mono_regular = -1;
-
 Theme::Theme(NVGcontext *ctx) {
     m_standard_font_size                 = 16;
     m_button_font_size                   = 20;
@@ -31,7 +26,7 @@ Theme::Theme(NVGcontext *ctx) {
 
     m_window_corner_radius               = 2;
     m_window_header_height               = 30;
-    m_window_drop_shadow_size            = 10;
+    m_window_drop_shadow_size            = 0; // 10
     m_button_corner_radius               = 2;
     m_tab_border_width                   = 0.75f;
     m_tab_inner_margin                   = 5;
@@ -58,8 +53,8 @@ Theme::Theme(NVGcontext *ctx) {
     m_button_gradient_bot_unfocused      = Color(58, 255);
     m_button_gradient_top_pushed         = Color(41, 255);
     m_button_gradient_bot_pushed         = Color(29, 255);
-    m_button_gradient_top_hilite         = m_button_gradient_top_pushed;
-    m_button_gradient_bot_hilite         = m_button_gradient_bot_pushed;
+    m_button_gradient_top_hilite    = Color( 255, 255, 0, 255 );
+    m_button_gradient_bot_hilite    = Color( 128, 128, 0, 255 );
 
     /* Window-related */
     m_window_fill_unfocused              = Color(43, 230);
@@ -86,21 +81,14 @@ Theme::Theme(NVGcontext *ctx) {
     m_text_box_up_icon                  = FA_CHEVRON_UP;
     m_text_box_down_icon                = FA_CHEVRON_DOWN;
 
-    if ( m_font_sans_regular == -1 )
-       m_font_sans_regular = nvgCreateFontMem(ctx, "sans", (uint8_t *) roboto_regular_ttf,
-                                              roboto_regular_ttf_size, 0);
-
-    if ( m_font_sans_bold == -1 )
-       m_font_sans_bold = nvgCreateFontMem( ctx, "sans-bold", (uint8_t*)roboto_bold_ttf,
-                                           roboto_bold_ttf_size, 0);
-
-    if ( m_font_icons == -1 )
-       m_font_icons = nvgCreateFontMem( ctx, "icons", (uint8_t*)fontawesome_solid_ttf,
-                                       fontawesome_solid_ttf_size, 0);
-
-    if ( m_font_mono_regular == -1 )
-       m_font_mono_regular = nvgCreateFontMem( ctx, "mono", (uint8_t*)inconsolata_regular_ttf,
-                                              inconsolata_regular_ttf_size, 0);
+    m_font_sans_regular = nvgCreateFontMem(ctx, "sans", (uint8_t *) roboto_regular_ttf,
+                                           roboto_regular_ttf_size, 0);
+    m_font_sans_bold = nvgCreateFontMem(ctx, "sans-bold", (uint8_t *) roboto_bold_ttf,
+                                        roboto_bold_ttf_size, 0);
+    m_font_icons = nvgCreateFontMem(ctx, "icons", (uint8_t *) fontawesome_solid_ttf,
+                                    fontawesome_solid_ttf_size, 0);
+    m_font_mono_regular = nvgCreateFontMem(ctx, "mono", (uint8_t *) inconsolata_regular_ttf,
+                                           inconsolata_regular_ttf_size, 0);
 
     if (m_font_sans_regular == -1 || m_font_sans_bold == -1 ||
         m_font_icons == -1 || m_font_mono_regular == -1)

@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <nanogui/opengl.h>
 #include <nanogui/widget.h>
 
 NAMESPACE_BEGIN(nanogui)
@@ -50,12 +51,16 @@ public:
     /// Compute the size needed to fully display the label
     virtual Vector2i preferred_size(NVGcontext *ctx) const override;
 
+    void set_align_H( int align ) { m_text_alignH = align; }
+
     /// Draw the label
     virtual void draw(NVGcontext *ctx) override;
 protected:
     std::string m_caption;
     std::string m_font;
     Color m_color;
+
+    int m_text_alignH = NVG_ALIGN_LEFT;
 };
 
 NAMESPACE_END(nanogui)

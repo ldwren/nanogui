@@ -262,7 +262,7 @@ private:
 template <typename Scalar> class FloatBox : public TextBox {
 public:
     FloatBox(Widget *parent, Scalar value = (Scalar) 0.f) : TextBox(parent) {
-        m_number_format = sizeof(Scalar) == sizeof(float) ? "%.4g" : "%.7g";
+        number_format( "" );
         set_default_value("0");
         set_format("[-+]?[0-9]*\\.?[0-9]+([e_e][-+]?[0-9]+)?");
         set_value_increment((Scalar) 0.1);
@@ -274,7 +274,17 @@ public:
 
     std::string number_format() const { return m_number_format; }
 
-    void number_format(const std::string &format) { m_number_format = format; }
+    void number_format( const std::string& format )
+    {
+        if ( format.size( ) == 0 )
+        {
+              m_number_format = sizeof( Scalar ) == sizeof( float ) ? "%.4g" : "%.7g";
+        }
+        else
+        {
+              m_number_format = format;
+        }
+    }
 
     Scalar value() const {
         return (Scalar) std::stod(TextBox::value());
