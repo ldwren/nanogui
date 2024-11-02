@@ -16,7 +16,7 @@
 NAMESPACE_BEGIN(nanogui)
 
 Label::Label(Widget *parent, const std::string &caption, const std::string &font, int font_size)
-    : Widget(parent), m_caption(caption), m_font(font) {
+    : Widget(parent), m_caption(std::ref(m_internalCaption)), m_internalCaption(caption), m_font(font) {
     if (m_theme) {
         m_font_size = m_theme->m_standard_font_size;
         m_color = m_theme->m_text_color;
@@ -33,19 +33,19 @@ void Label::set_theme(Theme *theme) {
 }
 
 Vector2i Label::preferred_size(NVGcontext *ctx) const {
-    if (m_caption == "")
+    if (m_caption.get() == "")
         return Vector2i(0);
     nvgFontFace(ctx, m_font.c_str());
     nvgFontSize(ctx, font_size());
     if (m_fixed_size.x() > 0) {
         float bounds[4];
         nvgTextAlign( ctx, m_text_alignH | NVG_ALIGN_TOP );
-        nvgTextBoxBounds(ctx, m_pos.x(), m_pos.y(), m_fixed_size.x(), m_caption.c_str(), nullptr, bounds);
+        nvgTextBoxBounds(ctx, m_pos.x(), m_pos.y(), m_fixed_size.x(), m_caption.get().c_str(), nullptr, bounds);
         return Vector2i(m_fixed_size.x(), bounds[3] - bounds[1]);
     } else {
         nvgTextAlign( ctx, m_text_alignH | NVG_ALIGN_MIDDLE );
         return Vector2i(
-            nvgTextBounds(ctx, 0, 0, m_caption.c_str(), nullptr, nullptr) + 2,
+            nvgTextBounds(ctx, 0, 0, m_caption.get().c_str(), nullptr, nullptr) + 2,
             font_size()
         );
     }
@@ -59,10 +59,10 @@ void Label::draw(NVGcontext *ctx) {
 
     if (m_fixed_size.x() > 0) {
        nvgTextAlign( ctx, m_text_alignH | NVG_ALIGN_TOP );
-        nvgTextBox(ctx, m_pos.x(), m_pos.y(), m_fixed_size.x(), m_caption.c_str(), nullptr);
+        nvgTextBox(ctx, m_pos.x(), m_pos.y(), m_fixed_size.x(), m_caption.get().c_str(), nullptr);
     } else {
        nvgTextAlign( ctx, m_text_alignH | NVG_ALIGN_MIDDLE );
-        nvgText(ctx, m_pos.x(), m_pos.y() + m_size.y() * 0.5f, m_caption.c_str(), nullptr);
+        nvgText(ctx, m_pos.x(), m_pos.y() + m_size.y() * 0.5f, m_caption.get().c_str(), nullptr);
     }
 }
 

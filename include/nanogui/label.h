@@ -15,6 +15,8 @@
 #include <nanogui/opengl.h>
 #include <nanogui/widget.h>
 
+#include <functional>
+
 NAMESPACE_BEGIN(nanogui)
 
 /**
@@ -27,13 +29,15 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT Label : public Widget {
 public:
-    Label(Widget *parent, const std::string &caption,
+   Label( Widget* parent, const std::string& caption = "-",
           const std::string &font = "sans", int font_size = -1);
+
+    void Bind( std::string& ref ) { m_caption = std::ref( ref ); }
 
     /// Get the label's text caption
     const std::string &caption() const { return m_caption; }
     /// Set the label's text caption
-    void set_caption(const std::string &caption) { m_caption = caption; }
+    void set_caption(const std::string &caption) { m_internalCaption = caption; }
 
     /// Set the currently active font (2 are available by default: 'sans' and 'sans-bold')
     void set_font(const std::string &font) { m_font = font; }
@@ -56,7 +60,8 @@ public:
     /// Draw the label
     virtual void draw(NVGcontext *ctx) override;
 protected:
-    std::string m_caption;
+    std::reference_wrapper<std::string> m_caption;
+    std::string  m_internalCaption;
     std::string m_font;
     Color m_color;
 
