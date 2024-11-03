@@ -42,6 +42,8 @@ public:
 
     TextBox(Widget *parent, const std::string &value = "Untitled");
 
+    void Bind( std::string& value ) { m_value = std::ref( value ); }
+
     bool editable() const { return m_editable; }
     void set_editable(bool editable);
 
@@ -49,7 +51,7 @@ public:
     void set_spinnable(bool spinnable) { m_spinnable = spinnable; }
 
     const std::string &value() const { return m_value; }
-    void set_value(const std::string &value) { m_value = value; }
+    void  set_value( const std::string& value ) { m_valueInternal = value; }
 
     const std::string &default_value() const { return m_default_value; }
     void set_default_value(const std::string &default_value) { m_default_value = default_value; }
@@ -113,7 +115,9 @@ protected:
     bool m_editable;
     bool m_spinnable;
     bool m_committed;
-    std::string m_value;
+    std::reference_wrapper<std::string> m_value;
+    std::string m_valueInternal;
+
     std::string m_default_value;
     Alignment m_alignment;
     std::string m_units;

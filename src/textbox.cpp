@@ -26,8 +26,9 @@ TextBox::TextBox(Widget *parent, const std::string &value)
     : Widget(parent),
       m_editable(false),
       m_spinnable(false),
-      m_committed(true),
-      m_value(value),
+      m_committed(true), 
+      m_value( std::ref( m_valueInternal ) ),
+      m_valueInternal(value),
       m_default_value(""),
       m_alignment(Alignment::Center),
       m_units(""),
@@ -75,7 +76,7 @@ Vector2i TextBox::preferred_size(NVGcontext *ctx) const {
         sw = 14.f;
     }
 
-    float ts = nvgTextBounds(ctx, 0, 0, m_value.c_str(), nullptr, nullptr);
+    float ts = nvgTextBounds(ctx, 0, 0, m_value.get().c_str(), nullptr, nullptr);
     size[0] = size[1] + ts + uw + sw;
     return size;
 }
@@ -194,7 +195,7 @@ void TextBox::draw(NVGcontext* ctx) {
     }
 
     nvgFontSize(ctx, font_size());
-    nvgFillColor(ctx, m_enabled && (!m_committed || !m_value.empty()) ?
+    nvgFillColor( ctx, m_enabled && ( !m_committed || !m_value.get( ).empty( ) ) ?
         m_theme->m_text_color :
         m_theme->m_disabled_text_color);
 
@@ -211,7 +212,7 @@ void TextBox::draw(NVGcontext* ctx) {
     draw_pos.x() += m_text_offset;
 
     if (m_committed) {
-        nvgText(ctx, draw_pos.x(), draw_pos.y(), m_value.empty() ? m_placeholder.c_str() : m_value.c_str(), nullptr);
+        nvgText( ctx, draw_pos.x( ), draw_pos.y( ), m_value.get( ).empty( ) ? m_placeholder.c_str( ) : m_value.get( ).c_str( ), nullptr );
     } else {
         const int max_glyphs = 1024;
         NVGglyphPosition glyphs[max_glyphs];
