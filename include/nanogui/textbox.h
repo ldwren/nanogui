@@ -51,7 +51,10 @@ public:
     void set_spinnable(bool spinnable) { m_spinnable = spinnable; }
 
     const std::string &value() const { return m_value; }
-    void  set_value( const std::string& value ) { m_valueInternal = value; }
+    void  set_value( const std::string& value ) 
+    {
+       m_internalValue = value; 
+    }
 
     const std::string &default_value() const { return m_default_value; }
     void set_default_value(const std::string &default_value) { m_default_value = default_value; }
@@ -116,7 +119,6 @@ protected:
     bool m_spinnable;
     bool m_committed;
     std::reference_wrapper<std::string> m_value;
-    std::string m_valueInternal;
 
     std::string m_default_value;
     Alignment m_alignment;
@@ -135,6 +137,10 @@ protected:
     int m_mouse_down_modifier;
     float m_text_offset;
     double m_last_click;
+
+private:
+    std::string m_internalValue;
+
 };
 
 /**
@@ -250,6 +256,9 @@ public:
         return false;
     }
 private:
+    // std::reference_wrapper< Scalar > m_scalar;
+    Scalar m_internalScalar;
+
     Scalar m_mouse_down_value;
     Scalar m_value_increment;
     Scalar m_min_value, m_max_value;

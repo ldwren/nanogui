@@ -27,8 +27,8 @@ TextBox::TextBox(Widget *parent, const std::string &value)
       m_editable(false),
       m_spinnable(false),
       m_committed(true), 
-      m_value( std::ref( m_valueInternal ) ),
-      m_valueInternal(value),
+      m_value( std::ref( m_internalValue ) ),
+      m_internalValue(value),
       m_default_value(""),
       m_alignment(Alignment::Center),
       m_units(""),
@@ -321,7 +321,7 @@ bool TextBox::mouse_button_event(const Vector2i &p, int button, bool down,
                 double time = glfwGetTime();
                 if (time - m_last_click < 0.25) {
                     /* Double-click: reset to default value */
-                    m_value = m_default_value;
+                    m_value.get() = m_default_value;
                     if (m_callback)
                         m_callback(m_value);
 
@@ -379,13 +379,13 @@ bool TextBox::focus_event(bool focused) {
         } else {
             if (m_valid_format) {
                 if (m_value_temp == "")
-                    m_value = m_default_value;
+                    m_value.get() = m_default_value;
                 else
-                    m_value = m_value_temp;
+                    m_value.get() = m_value_temp;
             }
 
             if (m_callback && !m_callback(m_value))
-                m_value = backup;
+                m_value.get() = backup;
 
             m_valid_format = true;
             m_committed = true;
