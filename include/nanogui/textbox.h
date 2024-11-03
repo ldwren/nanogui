@@ -163,10 +163,7 @@ public:
         set_spinnable(false);
     }
 
-    void Bind( Scalar& value ) 
-    {
-       m_scalar = std::ref( value ); 
-    }
+    void Bind( Scalar& value ) { m_scalar = std::ref( value ); }
 
     virtual void Update( ) override
     { 
@@ -301,7 +298,8 @@ public:
  */
 template <typename Scalar> class FloatBox : public TextBox {
 public:
-    FloatBox(Widget *parent, Scalar value = (Scalar) 0.f) : TextBox(parent) {
+    FloatBox( Widget* parent, Scalar value = (Scalar)0.f ) : TextBox( parent ), m_scalar( std::ref( m_internalScalar ) )
+    {
         number_format( "" );
         set_default_value("0");
         set_format("[-+]?[0-9]*\\.?[0-9]+([e_e][-+]?[0-9]+)?");
@@ -311,6 +309,14 @@ public:
         set_value(value);
         set_spinnable(false);
     }
+
+    void Bind( Scalar& value ) { m_scalar = std::ref( value ); }
+
+    virtual void Update( ) override
+    {
+        // Update bound variable
+        m_scalar.get( ) = value( );
+    };
 
     std::string number_format() const { return m_number_format; }
 
@@ -419,7 +425,20 @@ public:
         return false;
     }
 
-private:
+    virtual void draw( NVGcontext* ctx ) override
+    {
+        if ( m_internalScalar != m_scalar ) // Need to check for a change in values and update accordingly
+        {
+            set_value( m_scalar );
+            m_internalScalar = m_scalar;
+        }
+        TextBox::draw( ctx );
+    }
+
+  private:
+    std::reference_wrapper< Scalar > m_scalar;
+    Scalar                           m_internalScalar;
+
     std::string m_number_format;
     Scalar m_mouse_down_value;
     Scalar m_value_increment;
