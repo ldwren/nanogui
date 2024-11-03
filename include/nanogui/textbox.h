@@ -43,6 +43,7 @@ public:
     TextBox(Widget *parent, const std::string &value = "Untitled");
 
     void Bind( std::string& value ) { m_value = std::ref( value ); }
+    virtual void Update( ){ };
 
     bool editable() const { return m_editable; }
     void set_editable(bool editable);
@@ -153,7 +154,7 @@ private:
  */
 template <typename Scalar> class IntBox : public TextBox {
 public:
-    IntBox(Widget *parent, Scalar value = (Scalar) 0) : TextBox(parent) {
+    IntBox(Widget *parent, Scalar value = (Scalar) 0) : TextBox(parent), m_scalar( std::ref(m_internalScalar ) ) {
         set_default_value("0");
         set_format(std::is_signed<Scalar>::value ? "[-]?[0-9]*" : "[0-9]*");
         set_value_increment(1);
@@ -161,6 +162,17 @@ public:
         set_value(value);
         set_spinnable(false);
     }
+
+    void Bind( Scalar& value ) 
+    {
+       m_scalar = std::ref( value ); 
+    }
+
+    virtual void Update( ) override
+    { 
+       // Update bound variable
+        m_scalar.get() = value( );
+    };
 
     Scalar value() const {
         std::istringstream iss(TextBox::value());
@@ -213,10 +225,12 @@ public:
         if (m_spinnable && area != SpinArea::None && down && !focused()) {
             if (area == SpinArea::Top) {
                 set_value(value() + m_value_increment);
+                Update( );
                 if (m_callback)
                     m_callback(m_value);
             } else if (area == SpinArea::Bottom) {
                 set_value(value() - m_value_increment);
+                Update( );
                 if (m_callback)
                     m_callback(m_value);
             }
@@ -235,6 +249,7 @@ public:
             m_mouse_down_pos.x() != -1) {
             int value_delta = static_cast<int>((p.x() - m_mouse_down_pos.x()) / float(10));
             set_value(m_mouse_down_value + value_delta * m_value_increment);
+            Update( );
             if (m_callback)
                 m_callback(m_value);
             return true;
@@ -249,14 +264,26 @@ public:
         if (m_spinnable && !focused()) {
               int value_delta = (rel.y() > 0) ? 1 : -1;
               set_value(value() + value_delta*m_value_increment);
+              Update( );
               if (m_callback)
                   m_callback(m_value);
               return true;
         }
         return false;
     }
-private:
-    // std::reference_wrapper< Scalar > m_scalar;
+
+    virtual void draw(NVGcontext* ctx) override
+    { 
+       if (m_internalScalar != m_scalar) // Need to check for a change in values and update accordingly
+       {
+          set_value( m_scalar );
+          m_internalScalar = m_scalar;
+       }
+       TextBox::draw( ctx );
+    }
+
+  private:
+    std::reference_wrapper< Scalar > m_scalar;
     Scalar m_internalScalar;
 
     Scalar m_mouse_down_value;
@@ -345,10 +372,12 @@ public:
         if (m_spinnable && area != SpinArea::None && down && !focused()) {
             if (area == SpinArea::Top) {
                 set_value(value() + m_value_increment);
+                Update( );
                 if (m_callback)
                     m_callback(m_value);
             } else if (area == SpinArea::Bottom) {
                 set_value(value() - m_value_increment);
+                Update( );
                 if (m_callback)
                     m_callback(m_value);
             }
@@ -367,6 +396,7 @@ public:
             m_mouse_down_pos.x() != -1) {
             int value_delta = static_cast<int>((p.x() - m_mouse_down_pos.x()) / float(10));
             set_value(m_mouse_down_value + value_delta * m_value_increment);
+            Update( );
             if (m_callback)
                 m_callback(m_value);
             return true;
@@ -381,6 +411,7 @@ public:
         if (m_spinnable && !focused()) {
             int value_delta = (rel.y() > 0) ? 1 : -1;
             set_value(value() + value_delta*m_value_increment);
+            Update( );
             if (m_callback)
                 m_callback(m_value);
             return true;

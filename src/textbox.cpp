@@ -322,6 +322,7 @@ bool TextBox::mouse_button_event(const Vector2i &p, int button, bool down,
                 if (time - m_last_click < 0.25) {
                     /* Double-click: reset to default value */
                     m_value.get() = m_default_value;
+                    Update( );
                     if (m_callback)
                         m_callback(m_value);
 
@@ -383,7 +384,8 @@ bool TextBox::focus_event(bool focused) {
                 else
                     m_value.get() = m_value_temp;
             }
-
+            
+            Update( );
             if (m_callback && !m_callback(m_value))
                 m_value.get() = backup;
 
@@ -453,7 +455,9 @@ bool TextBox::keyboard_event(int key, int /* scancode */, int action, int modifi
                     if (m_cursor_pos < (int) m_value_temp.length())
                         m_value_temp.erase(m_value_temp.begin() + m_cursor_pos);
                 }
-            } else if (key == GLFW_KEY_ENTER) {
+            }
+            else if ( ( key == GLFW_KEY_ENTER ) || ( key == GLFW_KEY_KP_ENTER ) || ( key == GLFW_KEY_TAB ) ) // Enter, main or keypad - or TAB
+            {
                 if (!m_committed)
                     focus_event(false);
             } else if (key == GLFW_KEY_A && modifiers == SYSTEM_COMMAND_MOD) {
