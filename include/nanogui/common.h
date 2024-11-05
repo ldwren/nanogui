@@ -349,3 +349,9 @@ NAMESPACE_BEGIN(enoki)
 template <typename Value_, bool IsMask_, typename Derived_> struct ArrayBase;
 NAMESPACE_END(enoki)
 
+// Force a memory leak with a specific message
+#define LEAKMSG( S )                                        \
+   {                                                        \
+      char* c1 = new char[ sizeof( "LEAK: "##S ) ]( );      \
+      memcpy( c1, ( "LEAK: "##S ), sizeof( "LEAK: "##S ) ); \
+   }

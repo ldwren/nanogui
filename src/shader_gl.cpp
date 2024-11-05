@@ -254,6 +254,18 @@ Shader::Shader(RenderPass *render_pass,
 }
 
 Shader::~Shader() {
+   for ( auto& [ key, buf ] : m_buffers )
+   {
+      if ( buf.type == UniformBuffer )
+      {
+         if ( buf.buffer )
+         {
+            delete[] (uint8_t*)buf.buffer;
+            buf.buffer = nullptr;
+         }
+      }
+   }
+
     CHK(glDeleteProgram(m_shader_handle));
 #if defined(NANOGUI_USE_OPENGL)
     CHK(glDeleteVertexArrays(1, &m_vertex_array_handle));
