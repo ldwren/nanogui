@@ -23,7 +23,6 @@ void register_basics(nb::module_ &m) {
         .def("color", &Label::color, D(Label, color))
         .def("set_color", &Label::set_color, D(Label, set_color));
 
-
     nb::class_<Popup, Window, PyPopup> popup(m, "Popup", D(Popup));
     popup
         .def(nb::init<Widget *, Window *>(), "parent"_a, "parent_window"_a, D(Popup, Popup))

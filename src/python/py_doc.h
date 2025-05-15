@@ -373,6 +373,10 @@ static const char *__doc_nanogui_Button_set_text_color = R"doc(Sets the text col
 
 static const char *__doc_nanogui_Button_text_color = R"doc(Returns the text color of the caption of this Button.)doc";
 
+static const char *__doc_nanogui_Button_padding = R"doc(The padding of this Button.)doc";
+
+static const char *__doc_nanogui_Button_set_padding = R"doc(Set the padding of this Button)doc";
+
 static const char *__doc_nanogui_Canvas =
 R"doc(\class GLCanvas canvas.h nanogui/canvas.h
 

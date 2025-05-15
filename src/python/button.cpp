@@ -32,7 +32,9 @@ void register_button(nb::module_ &m) {
         .def("change_callback", &Button::change_callback, D(Button, change_callback))
         .def("set_change_callback", &Button::set_change_callback, D(Button, set_change_callback))
         .def("button_group", &Button::button_group, D(Button, button_group))
-        .def("set_button_group", &Button::set_button_group, D(Button, set_button_group));
+        .def("set_button_group", &Button::set_button_group, D(Button, set_button_group))
+        .def("padding", &Button::padding, D(Button, padding))
+        .def("set_padding", &Button::set_padding, D(Button, set_padding));
 
     nb::enum_<Button::IconPosition>(button, "IconPosition", D(Button, IconPosition))
         .value("Left", Button::IconPosition::Left)
