@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.13..3.18)
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.14)
+# cmake_policy(SET CMP0175 OLD) # Uncomment to suppress warning
 
 # Extract project version from source
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/include/nanogui/common.h"
