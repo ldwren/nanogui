@@ -195,7 +195,7 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
     GLFWmonitor** monitors = glfwGetMonitors( &count );
 
       GLFWmonitor* monitor = nullptr;
-      if ( screenNum > ( count - 1 ))
+      if ( screenNum > ( static_cast<unsigned int>( count - 1 )))
          monitor = glfwGetPrimaryMonitor( );
       else
          monitor = monitors[ screenNum ];
