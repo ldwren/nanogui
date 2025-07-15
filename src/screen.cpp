@@ -194,6 +194,10 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
     glfwWindowHint(GLFW_MAXIMIZED, maximized ? GL_TRUE : GL_FALSE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
+    glfwWindowHintString(GLFW_X11_CLASS_NAME, caption.c_str());
+    glfwWindowHintString(GLFW_X11_INSTANCE_NAME, caption.c_str());
+    glfwWindowHintString(GLFW_WAYLAND_APP_ID, caption.c_str());
+
     for (int i = 0; i < 2; ++i) {
         if (fullscreen) {
             GLFWmonitor *monitor = glfwGetPrimaryMonitor();
@@ -547,6 +551,11 @@ void Screen::set_caption(const std::string &caption) {
 }
 
 void Screen::move_window(const Vector2i &rel) {
+    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
+        // Wayland does not support moving windows, so we do nothing
+        return;
+    }
+
     Vector2i pos;
     glfwGetWindowPos(m_glfw_window, &pos[0], &pos[1]);
     pos += rel;
@@ -576,7 +585,7 @@ void Screen::move_window(const Vector2i &rel) {
 
 #if defined(_WIN32) || defined(__linux__) || defined(EMSCRIPTEN)
     glfwSetWindowPos(m_glfw_window, pos.x() * m_pixel_ratio,
-                                    pos.y() * m_pixel_ratio);
+                     pos.y() * m_pixel_ratio);
 #else
     glfwSetWindowPos(m_glfw_window, pos.x(), pos.y());
 #endif
