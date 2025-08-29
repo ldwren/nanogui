@@ -10,33 +10,6 @@
 #  include <signal.h>
 #endif
 
-#if defined(__APPLE__) || defined(__linux__)
-namespace {
-    class semaphore {
-    public:
-        semaphore(int count = 0) : count(count) { }
-
-        void notify() {
-            std::unique_lock<std::mutex> lck(mtx);
-            ++count;
-            cv.notify_one();
-        }
-
-        void wait() {
-            std::unique_lock<std::mutex> lck(mtx);
-            while (count == 0)
-                cv.wait(lck);
-            --count;
-        }
-
-    private:
-        std::mutex mtx;
-        std::condition_variable cv;
-        int count;
-    };
-}
-#endif
-
 extern void register_vector(nb::module_ &m);
 extern void register_glfw(nb::module_ &m);
 extern void register_entypo(nb::module_ &m);
@@ -90,6 +63,13 @@ NB_MODULE(nanogui_ext, m_) {
         .value("Eager", RunMode::Eager, D(RunMode, Eager))
         .value("Lazy", RunMode::Lazy, D(RunMode, Lazy));
 
+    nb::enum_<FileDialogType>(m, "FileDialogType", D(FileDialogType))
+        .value("Open", FileDialogType::Open, D(FileDialogType, Open))
+        .value("OpenMultiple", FileDialogType::Open, D(FileDialogType, OpenMultiple))
+        .value("Save", FileDialogType::Save, D(FileDialogType, Save))
+        .value("PickFolder", FileDialogType::PickFolder, D(FileDialogType, PickFolder))
+        .value("PickFolderMultiple", FileDialogType::PickFolder, D(FileDialogType, PickFolderMultiple));
+
     m.def("run", [](RunMode run_mode) {
         nb::gil_scoped_release release;
 
@@ -108,18 +88,10 @@ NB_MODULE(nanogui_ext, m_) {
     m.def("leave", &nanogui::leave, D(leave));
     m.def("test_10bit_edr_support", &test_10bit_edr_support, D(test_10bit_edr_support));
     m.def("active", &nanogui::active, D(active));
-    m.def("file_dialog",
-          (std::string(*)(
-              const std::vector<std::pair<std::string, std::string>> &, bool)) &
-              nanogui::file_dialog,
+    m.def("file_dialog", nanogui::file_dialog, "widget"_a, "type"_a,
+          "filters"_a = nb::list(), "default_path"_a = nb::str(""),
           D(file_dialog));
-    m.def("file_dialog",
-          (std::vector<std::string>(*)(
-              const std::vector<std::pair<std::string, std::string>> &, bool,
-              bool)) &
-              nanogui::file_dialog,
-          D(file_dialog, 2));
-#if defined(__APPLE__)
+    #if defined(__APPLE__)
         m.def("chdir_to_bundle_parent", &nanogui::chdir_to_bundle_parent);
     #endif
     m.def("utf8", [](int c) { return std::string(utf8(c).data()); }, D(utf8));

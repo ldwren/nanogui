@@ -10,25 +10,23 @@
 */
 
 #include <nanogui/screen.h>
-
-#if defined(_WIN32)
-#  ifndef NOMINMAX
-#  define NOMINMAX 1
-#  endif
-#  include <windows.h>
-#endif
-
 #include <nanogui/opengl.h>
 #include <nanogui/metal.h>
-#include <map>
-#include <thread>
-#include <chrono>
+#include <unordered_map>
 #include <mutex>
-#include <iostream>
+
+#if defined(__APPLE__)
+#  define GLFW_EXPOSE_NATIVE_COCOA
+#elif defined(_WIN32)
+#  define GLFW_EXPOSE_NATIVE_WIN32
+#else
+#  define GLFW_EXPOSE_NATIVE_WAYLAND
+#  define GLFW_EXPOSE_NATIVE_X11
+#endif
+
+#include <nfd_glfw3.h>
 
 #if !defined(_WIN32)
-#  include <locale.h>
-#  include <signal.h>
 #  include <dirent.h>
 #endif
 
@@ -38,7 +36,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-extern std::map<GLFWwindow *, Screen *> __nanogui_screens;
+extern std::unordered_map<GLFWwindow *, Screen *> __nanogui_screens;
 
 #if defined(__APPLE__)
   extern void disable_saved_application_state_osx();
@@ -59,7 +57,7 @@ void init(bool color_management) {
         [](int error, const char *descr) {
             if (error == GLFW_NOT_INITIALIZED)
                 return; /* Ignore */
-            std::cerr << "GLFW error " << error << ": " << descr << std::endl;
+            fprintf(stderr, "GLFW error %i: %s", error, descr);
         }
     );
 
@@ -75,6 +73,10 @@ void init(bool color_management) {
 #endif
 
     glfwSetTime(0);
+
+    nfdresult_t rv = NFD_Init();
+    if (rv != NFD_OKAY)
+        throw std::runtime_error("Could not initialize NFD!");
 }
 
 #if defined(EMSCRIPTEN)
@@ -158,7 +160,7 @@ void run(RunMode run_mode) {
         // Process events once more
         glfwPollEvents();
     } catch (const std::exception &e) {
-        std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
+        fprintf(stderr, "Caught exception in main loop: %s", e.what());
         leave();
     }
 }
@@ -181,6 +183,8 @@ std::pair<bool, bool> test_10bit_edr_support() {
 
 
 void shutdown() {
+    NFD_Quit();
+
     glfwTerminate();
 
 #if defined(NANOGUI_USE_METAL)
@@ -217,8 +221,9 @@ std::string utf8(uint32_t c) {
     return std::string(seq, seq + n);
 }
 
+static std::unordered_map<std::string, int> icon_cache;
+
 int __nanogui_get_image(NVGcontext *ctx, const std::string &name, uint8_t *data, uint32_t size) {
-    static std::map<std::string, int> icon_cache;
     auto it = icon_cache.find(name);
     if (it != icon_cache.end())
         return it->second;
@@ -266,157 +271,118 @@ load_image_directory(NVGcontext *ctx, const std::string &path) {
     return result;
 }
 
-std::string file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save) {
-    auto result = file_dialog(filetypes, save, false);
-    return result.empty() ? "" : result.front();
-}
+template <typename Func> struct scope_guard {
+    scope_guard(Func &&func) : func(std::move(func)) { };
+    ~scope_guard() { func(); }
+    scope_guard(const Func &) = delete;
+    scope_guard() = delete;
+    scope_guard& operator=(const Func &) = delete;
+    scope_guard& operator=(Func&&) = delete;
 
-#if !defined(__APPLE__)
-std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save, bool multiple) {
-    static const int FILE_DIALOG_MAX_BUFFER = 16384;
-    if (save && multiple) {
-        throw std::invalid_argument("save and multiple must not both be true.");
-    }
+private:
+    Func func;
+};
 
-#if defined(EMSCRIPTEN)
-    throw std::runtime_error("Opening files is not supported when NanoGUI is compiled via Emscripten");
-#elif defined(_WIN32)
-    OPENFILENAMEW ofn;
-    ZeroMemory(&ofn, sizeof(OPENFILENAMEW));
-    ofn.lStructSize = sizeof(OPENFILENAMEW);
-    wchar_t tmp[FILE_DIALOG_MAX_BUFFER];
-    ofn.lpstrFile = tmp;
-    ZeroMemory(tmp, sizeof(tmp));
-    ofn.nMaxFile = FILE_DIALOG_MAX_BUFFER;
-    ofn.nFilterIndex = 1;
+std::vector<std::string>
+file_dialog(Widget *parent,
+            FileDialogType type,
+            const std::vector<std::pair<std::string, std::string>> &filters,
+            const std::string &default_path) {
 
-    std::string filter;
+    std::vector<nfdu8filteritem_t> nfd_filters;
+    for (const auto& ftype: filters)
+        nfd_filters.push_back({ftype.second.c_str(), ftype.first.c_str()});
+    const char *nfd_default_path = default_path.empty() ? nullptr: default_path.c_str();
 
-    if (!save && filetypes.size() > 1) {
-        filter.append("Supported file types (");
-        for (size_t i = 0; i < filetypes.size(); ++i) {
-            filter.append("*.");
-            filter.append(filetypes[i].first);
-            if (i + 1 < filetypes.size())
-                filter.append(";");
-        }
-        filter.append(")");
-        filter.push_back('\0');
-        for (size_t i = 0; i < filetypes.size(); ++i) {
-            filter.append("*.");
-            filter.append(filetypes[i].first);
-            if (i + 1 < filetypes.size())
-                filter.append(";");
-        }
-        filter.push_back('\0');
-    }
-    for (auto pair : filetypes) {
-        filter.append(pair.second);
-        filter.append(" (*.");
-        filter.append(pair.first);
-        filter.append(")");
-        filter.push_back('\0');
-        filter.append("*.");
-        filter.append(pair.first);
-        filter.push_back('\0');
-    }
-    filter.push_back('\0');
+    const nfdpathset_t* out_paths{};
+    nfdwindowhandle_t parent_window{};
+    nfdu8char_t* out_path{};
+    nfdresult_t result{};
+    nfdpathsetenum_t enumerator = {};
+    bool enumerator_set = false;
 
-    int size = MultiByteToWideChar(CP_UTF8, 0, &filter[0], (int)filter.size(), NULL, 0);
-    std::wstring wfilter(size, 0);
-    MultiByteToWideChar(CP_UTF8, 0, &filter[0], (int)filter.size(), &wfilter[0], size);
+    auto cleanup = scope_guard([&]() {
+        if (out_paths)
+            NFD_PathSet_Free(out_paths);
+        if (out_path)
+            NFD_FreePathU8(out_path);
+        if (enumerator_set)
+            NFD_PathSet_FreeEnum(&enumerator);
+    });
 
-    ofn.lpstrFilter = wfilter.data();
+    if (!NFD_GetNativeWindowFromGLFWWindow(parent->screen()->glfw_window(), &parent_window))
+        throw std::runtime_error("nanogui::file_dialog(): could not obtain native window handle");
 
-    if (save) {
-        ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-        if (GetSaveFileNameW(&ofn) == FALSE)
-            return {};
-    } else {
-        ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-        if (multiple)
-            ofn.Flags |= OFN_ALLOWMULTISELECT;
-        if (GetOpenFileNameW(&ofn) == FALSE)
-            return {};
-    }
-
-    size_t i = 0;
-    std::vector<std::string> result;
-    while (tmp[i] != '\0') {
-        std::string filename;
-        int tmpSize = (int)wcslen(&tmp[i]);
-        if (tmpSize > 0) {
-            int filenameSize = WideCharToMultiByte(CP_UTF8, 0, &tmp[i], tmpSize, NULL, 0, NULL, NULL);
-            filename.resize(filenameSize, 0);
-            WideCharToMultiByte(CP_UTF8, 0, &tmp[i], tmpSize, &filename[0], filenameSize, NULL, NULL);
-        }
-
-        result.emplace_back(filename);
-        i += tmpSize + 1;
-    }
-
-    if (result.size() > 1) {
-        for (i = 1; i < result.size(); ++i) {
-            result[i] = result[0] + "\\" + result[i];
-        }
-        result.erase(begin(result));
-    }
-
-    if (save && ofn.nFilterIndex > 0) {
-        auto ext = filetypes[ofn.nFilterIndex - 1].first;
-        if (ext != "*") {
-            ext.insert(0, ".");
-
-            auto &name = result.front();
-            if (name.size() <= ext.size() ||
-                name.compare(name.size() - ext.size(), ext.size(), ext) != 0) {
-                name.append(ext);
+    switch (type) {
+        case FileDialogType::Save: {
+                nfdsavedialogu8args_t args = {};
+                args.filterList = nfd_filters.data();
+                args.filterCount = nfd_filters.size();
+                args.defaultPath = nfd_default_path;
+                args.parentWindow = parent_window;
+                result = NFD_SaveDialogU8_With(&out_path, &args);
             }
-        }
+            break;
+
+        case FileDialogType::Open:
+        case FileDialogType::OpenMultiple: {
+                nfdopendialogu8args_t args = {};
+                args.filterList = nfd_filters.data();
+                args.filterCount = nfd_filters.size();
+                args.defaultPath = nfd_default_path;
+                args.parentWindow = parent_window;
+
+                if (type == FileDialogType::OpenMultiple)
+                    result = NFD_OpenDialogMultipleU8_With(&out_paths, &args);
+                else
+                    result = NFD_OpenDialogU8_With(&out_path, &args);
+            }
+            break;
+
+        case FileDialogType::PickFolder:
+        case FileDialogType::PickFolderMultiple: {
+                nfdpickfolderu8args_t args = {};
+                args.defaultPath = nfd_default_path;
+                args.parentWindow = parent_window;
+
+                if (!filters.empty())
+                    throw std::runtime_error("nanogui::file_dialog(): filters are not supported for folder selection.");
+
+                if (type == FileDialogType::PickFolderMultiple)
+                    result = NFD_PickFolderMultipleU8_With(&out_paths, &args);
+                else
+                    result = NFD_PickFolderU8_With(&out_path, &args);
+            }
+            break;
     }
 
-    return result;
-#else
-    char buffer[FILE_DIALOG_MAX_BUFFER];
-    buffer[0] = '\0';
+    if (result == NFD_CANCEL)
+        return {};
+    else if (result != NFD_OKAY)
+        throw std::runtime_error("nanogui::file_dialog(): dialog error: " + std::string(NFD_GetError()));
 
-    std::string cmd = "zenity --file-selection ";
-    // The safest separator for multiple selected paths is /, since / can never occur
-    // in file names. Only where two paths are concatenated will there be two / following
-    // each other.
-    if (multiple)
-        cmd += "--multiple --separator=\"/\" ";
-    if (save)
-        cmd += "--save ";
-    cmd += "--file-filter=\"";
-    for (auto pair : filetypes)
-        cmd += "\"*." + pair.first + "\" ";
-    cmd += "\"";
-    FILE *output = popen(cmd.c_str(), "r");
-    if (output == nullptr)
-        throw std::runtime_error("popen() failed -- could not launch zenity!");
-    while (fgets(buffer, FILE_DIALOG_MAX_BUFFER, output) != NULL)
-        ;
-    pclose(output);
-    std::string paths(buffer);
-    paths.erase(std::remove(paths.begin(), paths.end(), '\n'), paths.end());
+    if (!NFD_PathSet_GetEnum(out_paths, &enumerator))
+        throw std::runtime_error("nanogui::file_dialog(): could not obtain enumerator: " + std::string(NFD_GetError()));
+    enumerator_set = true;
 
-    std::vector<std::string> result;
-    while (!paths.empty()) {
-        size_t end = paths.find("//");
-        if (end == std::string::npos) {
-            result.emplace_back(paths);
-            paths = "";
-        } else {
-            result.emplace_back(paths.substr(0, end));
-            paths = paths.substr(end + 1);
-        }
+    std::vector<std::string> paths;
+
+    switch (type) {
+        case FileDialogType::Save:
+        case FileDialogType::Open:
+        case FileDialogType::PickFolder:
+            paths.emplace_back(out_path);
+            break;
+
+        case FileDialogType::PickFolderMultiple:
+        case FileDialogType::OpenMultiple:
+            while (NFD_PathSet_EnumNextU8(&enumerator, &out_path) && out_path)
+                paths.emplace_back(out_path);
+            break;
     }
 
-    return result;
-#endif
+    return paths;
 }
-#endif
 
 static void (*object_inc_ref_py)(PyObject *) noexcept = nullptr;
 static void (*object_dec_ref_py)(PyObject *) noexcept = nullptr;

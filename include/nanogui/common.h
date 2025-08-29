@@ -259,22 +259,6 @@ inline bool active() { return run_mode() != RunMode::Stopped; }
 extern NANOGUI_EXPORT void async(const std::function<void()> &func);
 
 /**
- * \brief Open a native file open/save dialog.
- *
- * \param filetypes
- *     Pairs of permissible formats with descriptions like
- *     ``("png", "Portable Network Graphics")``.
- *
- * \param save
- *     Set to ``true`` if you would like subsequent file dialogs to open
- *     at whatever folder they were in when they close this one.
- */
-extern NANOGUI_EXPORT std::string
-file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes,
-            bool save);
-
-
-/**
  * \brief Check for the availability of displays with 10-bit color and/or
  * extended dynamic range (EDR), i.e. the ability to reproduce intensities
  * exceeding the standard dynamic range from 0.0-1.0.
@@ -289,24 +273,51 @@ file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes,
  */
 extern NANOGUI_EXPORT std::pair<bool, bool> test_10bit_edr_support();
 
+/// Selection of file/folder dialog types supported by file_dialog()
+enum class FileDialogType {
+    /// Open a single file
+    Open,
+
+    /// Open multiple files
+    OpenMultiple,
+
+    /// Save a single file
+    Save,
+
+    /// Pick a single folder (``filters`` not supported)
+    PickFolder,
+
+    /// Pick multiple folders (``filters`` argument must be empty)
+    PickFolderMultiple
+};
+
 /**
- * \brief Open a native file open dialog, which allows multiple selection.
+ * \brief Open a native file/folder dialog
  *
- * \param filetypes
- *     Pairs of permissible formats with descriptions like
- *     ``("png", "Portable Network Graphics")``.
+ * This function can instantiate variety of file dialogs using native UI
+ * widgets. This functionality is bsaed on the bundled
+ * ``nativefiledialog-extended`` [1] library.
  *
- * \param save
- *     Set to ``true`` if you would like subsequent file dialogs to open
- *     at whatever folder they were in when they close this one.
+ * [1] https://github.com/btzy/nativefiledialog-extended
  *
- * \param multiple
- *     Set to ``true`` if you would like to be able to select multiple
- *     files at once. May not be simultaneously true with \p save.
+ * \param type
+ *     The type of dialog. For \ref FileDialogType::Open, \ref FileDialogType::Save,
+ *     and \ref FileDialogType::PickFolder, the output array contains at most one
+ *     entry.
+ *
+ * \param filter
+ *     Specify file formats with descriptions to indicate a preference for specific
+ *     file types.
+ *
+ * \param default_path
+ *     If specified, the OS dialog will show files/folders at a specified starting
+ *     location.
  */
 extern NANOGUI_EXPORT std::vector<std::string>
-file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes,
-            bool save, bool multiple);
+file_dialog(Widget *parent,
+            FileDialogType type,
+            const std::vector<std::pair<std::string, std::string>> &filters = {},
+            const std::string &default_path = {});
 
 #if defined(__APPLE__) || defined(DOXYGEN_DOCUMENTATION_BUILD)
 /**

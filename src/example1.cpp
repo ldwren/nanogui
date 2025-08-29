@@ -215,13 +215,23 @@ public:
                                        Alignment::Middle, 0, 6));
         b = new Button(tools, "Open");
         b->set_callback([&] {
-            std::cout << "File dialog result: " << file_dialog(
-                    { {"png", "Portable Network Graphics"}, {"txt", "Text file"} }, false) << std::endl;
+            auto result = file_dialog(this, FileDialogType::Open,
+                                      { { "png", "Portable Network Graphics" },
+                                        { "txt", "Text file" } });
+            if (result.size() == 1)
+                std::cout << "File dialog result: " << result[0] << std::endl;
+            else
+                std::cout << "File dialog cancelled." << std::endl;
         });
         b = new Button(tools, "Save");
         b->set_callback([&] {
-            std::cout << "File dialog result: " << file_dialog(
-                    { {"png", "Portable Network Graphics"}, {"txt", "Text file"} }, true) << std::endl;
+            auto result = file_dialog(this, FileDialogType::Save,
+                                      { { "png", "Portable Network Graphics" },
+                                        { "txt", "Text file" } });
+            if (result.size() == 1)
+                std::cout << "File dialog result: " << result[0] << std::endl;
+            else
+                std::cout << "File dialog cancelled." << std::endl;
         });
 
         new Label(window, "Combo box", "sans-bold");

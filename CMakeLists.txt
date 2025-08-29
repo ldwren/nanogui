@@ -355,11 +355,6 @@ else()
   set(NANOGUI_LIBRARY_TYPE "STATIC")
 endif()
 
-if (APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # Use automatic reference counting for Objective-C portions
-  add_compile_options(-fobjc-arc)
-endif()
-
 if (NANOGUI_BUILD_GLFW)
   list(APPEND NANOGUI_EXTRA $<TARGET_OBJECTS:glfw>)
 endif()
@@ -412,6 +407,11 @@ add_library(nanogui ${NANOGUI_LIBRARY_TYPE}
   include/nanogui/opengl.h
   include/nanogui/nanogui.h
 )
+
+if (APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # Use automatic reference counting for Objective-C portions
+  target_compile_options(nanogui PRIVATE -fobjc-arc)
+endif()
 
 target_compile_definitions(nanogui
   PUBLIC
@@ -622,5 +622,10 @@ if (NANOGUI_BUILD_PYTHON AND NANOGUI_MASTER_PROJECT)
     -o ${CMAKE_CURRENT_SOURCE_DIR}/src/python/py_doc.h
   )
 endif()
+
+# Native file dialog library
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(ext/nativefiledialog-extended)
+target_link_libraries(nanogui PRIVATE nfd)
 
 # vim: set et ts=2 sw=2 ft=cmake nospell:

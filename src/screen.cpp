@@ -71,7 +71,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-std::map<GLFWwindow *, Screen *> __nanogui_screens;
+std::unordered_map<GLFWwindow *, Screen *> __nanogui_screens;
 
 #if defined(NANOGUI_GLAD)
 static bool glad_initialized = false;

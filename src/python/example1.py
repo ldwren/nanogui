@@ -162,17 +162,17 @@ class TestApp(ng.Screen):
         tools.set_layout(ng.BoxLayout(ng.Orientation.Horizontal,
                                       ng.Alignment.Middle, 0, 6))
         b = ng.Button(tools, "Open")
-        valid = [("png", "Portable Network Graphics"), ("txt", "Text file")]
+        filters = [("png", "Portable Network Graphics"), ("txt", "Text file")]
 
         def cb():
-            result = ng.file_dialog(valid, False)
+            result = ng.file_dialog(self, ng.FileDialogType.Open, filters)
             print("File dialog result = %s" % result)
 
         b.set_callback(cb)
         b = ng.Button(tools, "Save")
 
         def cb():
-            result = ng.file_dialog(valid, True)
+            result = ng.file_dialog(self, ng.FileDialogType.Save, filters)
             print("File dialog result = %s" % result)
 
         b.set_callback(cb)

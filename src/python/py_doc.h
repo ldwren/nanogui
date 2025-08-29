@@ -3833,6 +3833,18 @@ R"doc(Get the current exposure multiplier
 Returns:
     Current exposure value)doc";
 
+static const char *__doc_nanogui_FileDialogType = "Selection of file/folder dialog types supported by file_dialog()";
+
+static const char *__doc_nanogui_FileDialogType_Open = "Open a single file";
+
+static const char *__doc_nanogui_FileDialogType_OpenMultiple = "Open multiple files";
+
+static const char *__doc_nanogui_FileDialogType_PickFolder = "Pick a single folder (``filters`` not supported)";
+
+static const char *__doc_nanogui_FileDialogType_PickFolderMultiple = "Pick multiple folders (``filters`` argument must be empty)";
+
+static const char *__doc_nanogui_FileDialogType_Save = "Save a single file";
+
 #if defined(__GNUG__)
 #pragma GCC diagnostic pop
 #endif
