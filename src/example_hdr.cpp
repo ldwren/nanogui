@@ -27,7 +27,7 @@ static const PrimaryEntry primary_table[] = {
     { ColorPrimaries::SMPTE170M,  "SMPTE170M" },
     { ColorPrimaries::SMPTE240M,  "SMPTE240M" },
     { ColorPrimaries::SMPTE428,   "SMPTE428" },
-    { ColorPrimaries::SMPTE431,   "SMPTE431" },
+    { ColorPrimaries::SMPTE431,   "SMPTE431 (Display P3)" },
     { ColorPrimaries::SMPTE432,   "SMPTE432" }
 };
 static const int num_primaries = sizeof(primary_table) / sizeof(primary_table[0]);
@@ -53,31 +53,20 @@ public:
         new Label(window, "Primaries");
 
         std::vector<std::string> primary_names;
-        for (int i = 0; i < num_primaries; ++i) {
+        for (int i = 0; i < num_primaries; ++i)
             primary_names.push_back(primary_table[i].name);
-        }
-
-        ColorPrimaries screen_primary = from_screen(this);
-        int primary_index = 0;
-        for (int i = 0; i < num_primaries; ++i) {
-            if (primary_table[i].primary == screen_primary) {
-                primary_index = i;
-                break;
-            }
-        }
 
         ComboBox *primaries_cbox = new ComboBox(window, primary_names);
-        primaries_cbox->set_selected_index(primary_index);
-
-        primaries_cbox->set_callback([this](int index) {
+        auto cb =  [this](int index) {
             auto chroma_array = chroma(primary_table[index].primary);
             m_rec709_matrix = chroma_to_rec709_matrix(chroma_array);
             update_texture();
-        });
+        };
 
-        // Initialize with current selection
-        auto chroma_array = chroma(primary_table[primary_index].primary);
-        m_rec709_matrix = chroma_to_rec709_matrix(chroma_array);
+        primaries_cbox->set_selected_index(8); // SMPTE431 / Display P3
+        cb(8);
+
+        primaries_cbox->set_callback(cb);
 
         new Label(window, "Linear ramps (0..4), bars mark integer values. Top: LDR sRGB, bottom: HDR with chosen primaries.");
 
@@ -88,8 +77,6 @@ public:
 
         perform_layout();
         window->set_position(Vector2i(5, 5));
-
-        update_texture();
     }
 
 private:

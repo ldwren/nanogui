@@ -17,9 +17,10 @@ class HDRGamutTest(ng.Screen):
 
         ng.Label(window, "Primaries")
         primaries = sorted(ng.ituth273.ColorPrimaries, key=lambda x: x.__name__)
-        primary_index = primaries.index(ng.ituth273.from_screen(self))
-        primaries_cbox = ng.ComboBox(window, [p.__name__ for p in primaries])
-        primaries_cbox.set_selected_index(primary_index)
+        smtp431_index = primaries.index(ng.ituth273.ColorPrimaries.SMTPE431)
+        primary_names = [p.__name__ for p in primaries]
+        primary_names[smtp431_index] += ' (Display P3)'
+        primaries_cbox = ng.ComboBox(window, primary_names)
 
         def primary_cb(index):
             p = ng.ituth273.chroma(primaries[index])
@@ -27,8 +28,9 @@ class HDRGamutTest(ng.Screen):
             self.rec709_matrix = np.from_dlpack(rec709_matrix)
             self.update_texture()
 
+        primaries_cbox.set_selected_index(smtp431_index)
+        primary_cb(smtp431_index)
         primaries_cbox.set_callback(primary_cb)
-        primary_cb(primary_index)
 
         ng.Label(window, "Linear ramps (0..4), bars mark integer values. Top: LDR sRGB, bottom: HDR with chosen primaries.")
         img = ng.ImageView(window)
