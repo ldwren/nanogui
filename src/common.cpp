@@ -319,7 +319,7 @@ file_dialog(Widget *parent,
         case FileDialogType::Save: {
                 nfdsavedialogu8args_t args = {};
                 args.filterList = nfd_filters.data();
-                args.filterCount = nfd_filters.size();
+                args.filterCount = (nfdfiltersize_t) nfd_filters.size();
                 args.defaultPath = nfd_default_path;
                 args.parentWindow = parent_window;
                 result = NFD_SaveDialogU8_With(&out_path, &args);
@@ -330,7 +330,7 @@ file_dialog(Widget *parent,
         case FileDialogType::OpenMultiple: {
                 nfdopendialogu8args_t args = {};
                 args.filterList = nfd_filters.data();
-                args.filterCount = nfd_filters.size();
+                args.filterCount = (nfdfiltersize_t) nfd_filters.size();
                 args.defaultPath = nfd_default_path;
                 args.parentWindow = parent_window;
 

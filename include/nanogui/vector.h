@@ -468,7 +468,7 @@ template <typename Value_, size_t Size_> struct Matrix {
     }
 
     /// Initialize from columns
-    template <typename... Args, std::enable_if_t<(std::is_same_v<Args, Column> && ...), int> = 0>
+    template <typename... Args, std::enable_if_t<std::conjunction_v<std::is_same<Args, Column>...>, int> = 0>
     Matrix(const Args&... args) : m{args...} { }
 
     friend Matrix operator*(const Matrix &a, const Matrix &b) {

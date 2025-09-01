@@ -39,8 +39,30 @@ nanobind_add_module(nanogui-python MODULE
 set_target_properties(nanogui-python PROPERTIES OUTPUT_NAME nanogui_ext)
 target_link_libraries(nanogui-python PRIVATE nanogui)
 
-set_target_properties(nanogui-python PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../nanogui)
+set(NANOGUI_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../nanogui)
+
+if (MSVC)
+  set_target_properties(nanogui-python PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE        ${NANOGUI_OUTPUT_DIRECTORY}
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG          ${NANOGUI_OUTPUT_DIRECTORY}
+    RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${NANOGUI_OUTPUT_DIRECTORY}
+    RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL     ${NANOGUI_OUTPUT_DIRECTORY}
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE        ${NANOGUI_OUTPUT_DIRECTORY}
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG          ${NANOGUI_OUTPUT_DIRECTORY}
+    LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${NANOGUI_OUTPUT_DIRECTORY}
+    LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL     ${NANOGUI_OUTPUT_DIRECTORY})
+
+    # On windows, the nanogui DLL file must be part of the same directory or stub generation fails
+    if (NANOGUI_BUILD_SHARED)
+      add_custom_command(TARGET nanogui-python POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          $<TARGET_FILE:nanogui>
+          $<TARGET_FILE_DIR:nanogui-python>)
+    endif()
+else()
+  set_target_properties(nanogui-python PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${NANOGUI_OUTPUT_DIRECTORY})
+endif()
 
 if (CMAKE_COMPILER_IS_GNUCC)
   # Quench warnings on GCC
@@ -67,4 +89,17 @@ nanobind_add_stub(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../../nanogui/__init__.pyi
   PYTHON_PATH $<TARGET_FILE_DIR:nanogui-python>/..
   DEPENDS nanogui-python ${CMAKE_CURRENT_BINARY_DIR}/../../nanogui/__init__.py
+)
+
+mark_as_advanced(
+  NB_CREATE_INSTALL_RULES
+  NB_TEST
+  NB_TEST_CUDA
+  NB_TEST_FREE_THREADED
+  NB_TEST_SANITIZERS_ASAN
+  NB_TEST_SANITIZERS_TSAN
+  NB_TEST_SANITIZERS_UBSAN
+  NB_TEST_SHARED_BUILD
+  NB_TEST_STABLE_ABI
+  NB_USE_SUBMODULE_DEPS
 )

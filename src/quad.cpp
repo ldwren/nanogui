@@ -175,12 +175,9 @@ TexturedQuad::TexturedQuad(RenderPass *render_pass, BlendMode blend_mode)
         3, 2, 0
     };
 
-    set_buffer("position", VariableType::Float32, 2,
-               (size_t[]){4, 3}, positions);
-    set_buffer("uv", VariableType::Float32, 2,
-               (size_t[]){4, 2}, uvs);
-    set_buffer("indices", VariableType::UInt32, 1,
-               (size_t[]){6}, indices);
+    set_buffer("position", VariableType::Float32, { 4, 3 }, positions);
+    set_buffer("uv", VariableType::Float32, { 4, 2 }, uvs);
+    set_buffer("indices", VariableType::UInt32, { 6 }, indices);
     set_uniform("mvp",
                 Matrix4f(-1, 0, 0, 0,
                           0, 1, 0, 0,

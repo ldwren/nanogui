@@ -26,7 +26,7 @@ auto register_vector_type(nb::module_ &m, const char *name) {
            for (size_t i = 0, size = std::min(Vector::Size, nb::len(arr)); i < size; ++i)
                (*v)[i] = nb::cast<Value>(arr[i]);
         })
-        .def("__len__", [](const Vector &) { return Size; })
+        .def("__len__", [](const Vector &) -> size_t { return Vector::Size; })
         .def(-nb::self)
         .def(nb::self == nb::self)
         .def(nb::self != nb::self)
@@ -107,19 +107,17 @@ auto register_matrix_type(nb::module_ &m, const char *name) {
         .def(nb::init<const Matrix &>());
 
     type.def("__init__",
-             [](Matrix *m, const nb::ndarray<Value, nb::f_contig, nb::shape<Size, Size>, nb::ro, nb::device::cpu> &array) {
+             [](Matrix *m, const nb::ndarray<Value, nb::shape<Size, Size>, nb::ro, nb::device::cpu> &array) {
                 new (m) Matrix();
-                memcpy(m->m, array.data(), sizeof(Value)*Size*Size);
-             })
-        .def("__init__",
-             [](Matrix *m, const nb::ndarray<Value, nb::c_contig, nb::shape<Size, Size>, nb::ro, nb::device::cpu> &array) {
-                new (m) Matrix();
-                memcpy(m->m, array.data(), sizeof(Value)*Size*Size);
-                *m = m->T();
+                for (size_t i = 0; i < Matrix::Size; ++i) {
+                    for (size_t j = 0; j < Matrix::Size; ++j) {
+                        m->m[j][i] = array(i, j);  // Column-major storage
+                    }
+                }
              })
         .def_prop_ro("T", &Matrix::T)
         .def("__matmul__", [](const Matrix &a, const Matrix &b) { return a * b; }, nb::is_operator())
-        .def("__len__", [](const Matrix &) { return Size; })
+        .def("__len__", [](const Matrix &) -> size_t { return Matrix::Size; })
         .def("__getitem__", [](const Matrix &m, size_t index) -> const Vector& {
             if (index >= Vector::Size)
                 throw nb::index_error();
@@ -137,7 +135,7 @@ auto register_matrix_type(nb::module_ &m, const char *name) {
                 delete (Matrix *) p;
             });
 
-            return nb::ndarray<float>(&t->m, {Size, Size}, owner);
+            return nb::ndarray<float>(&t->m, {Matrix::Size, Matrix::Size}, owner);
          })
         .def("__repr__", [](const Matrix &m) {
             std::ostringstream oss;
