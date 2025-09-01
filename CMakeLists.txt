@@ -427,8 +427,16 @@ target_compile_definitions(nanogui
 
   PRIVATE
     -DNANOGUI_BUILD
-    -DNVG_STB_IMAGE_IMPLEMENTATION
 )
+
+if (NOT NANOGUI_SKIP_STB_IMAGE_IMPLEMENTATION)
+  # Frameworks that statically link to nanobind and which already include the
+  # stb_image implementation bits can set this flag to avoid duplicate symbol
+  # errors.
+
+  target_compile_definitions(nanogui
+    PRIVATE -DNVG_STB_IMAGE_IMPLEMENTATION)
+endif()
 
 target_include_directories(nanogui
   PUBLIC
