@@ -8,13 +8,17 @@ on:
       - master
 
 jobs:
-  standard:
-    name: Compile on ${{ matrix.os }}
+  build:
+    name: ${{ matrix.build-type }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build-type: [shared, static]
       fail-fast: false
+
+    env:
+      BUILD_SHARED: ${{ matrix.build-type == 'shared' && 'ON' || 'OFF' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -37,12 +41,21 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           cmake -S . -B build -G "Visual Studio 17 2022" `
+            -DNANOGUI_BUILD_SHARED=${{ env.BUILD_SHARED }} `
             "-DPython_EXECUTABLE=$(python -c 'import sys; print(sys.executable)')"
 
       - name: Configure (Linux)
         if: runner.os == 'Linux'
         run: |
           cmake -S . -B build \
+            -DNANOGUI_BUILD_SHARED=${{ env.BUILD_SHARED }} \
+            "-DPython_EXECUTABLE=$(python3 -c 'import sys; print(sys.executable)')"
+
+      - name: Configure (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cmake -S . -B build \
+            -DNANOGUI_BUILD_SHARED=${{ env.BUILD_SHARED }} \
             "-DPython_EXECUTABLE=$(python3 -c 'import sys; print(sys.executable)')"
 
       - name: Build C++
