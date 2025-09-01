@@ -359,6 +359,14 @@ if (NANOGUI_BUILD_GLFW)
   list(APPEND NANOGUI_EXTRA $<TARGET_OBJECTS:glfw>)
 endif()
 
+# Native file dialog library
+set(BUILD_SHARED_LIBS OFF)
+set(NFD_INSTALL OFF CACHE BOOL " " FORCE)
+set(NFD_PORTAL ON CACHE BOOL " " FORCE)
+set(NFD_APPEND_EXTENSION ON CACHE BOOL " " FORCE)
+set(NFD_CASE_SENSITIVE_FILTER ON CACHE BOOL " " FORCE)
+add_subdirectory(ext/nativefiledialog-extended)
+
 # Compile main NanoGUI library
 add_library(nanogui ${NANOGUI_LIBRARY_TYPE}
   # Merge NanoVG into the NanoGUI library
@@ -479,6 +487,8 @@ else()
   target_link_libraries(nanogui PUBLIC ${NANOGUI_LIBS})
 endif()
 
+target_link_libraries(nanogui PRIVATE nfd)
+
 # Auto-detect GLES include directory on Raspberry PI
 if (EXISTS /opt/vc/include)
   target_include_directories(nanogui PUBLIC /opt/vc/include)
@@ -508,7 +518,7 @@ if (NANOGUI_INSTALL)
             FILES_MATCHING PATTERN "*.h")
   endif()
 
-  install(TARGETS nanogui EXPORT nanoguiTargets)
+  install(TARGETS nanogui nfd EXPORT nanoguiTargets)
 
   set(NANOGUI_CMAKECONFIG_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/cmake/nanogui")
 
@@ -623,13 +633,5 @@ if (NANOGUI_BUILD_PYTHON AND NANOGUI_MASTER_PROJECT)
   )
 endif()
 
-# Native file dialog library
-set(BUILD_SHARED_LIBS OFF)
-set(NFD_INSTALL OFF CACHE BOOL " " FORCE)
-set(NFD_PORTAL ON CACHE BOOL " " FORCE)
-set(NFD_APPEND_EXTENSION ON CACHE BOOL " " FORCE)
-set(NFD_CASE_SENSITIVE_FILTER ON CACHE BOOL " " FORCE)
-add_subdirectory(ext/nativefiledialog-extended)
-target_link_libraries(nanogui PRIVATE nfd)
 
 # vim: set et ts=2 sw=2 ft=cmake nospell:
