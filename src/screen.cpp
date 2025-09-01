@@ -1236,12 +1236,8 @@ bool Screen::resize_event(const Vector2i& size) {
 }
 
 void Screen::redraw() {
-    if (!m_redraw) {
-        #if !defined(EMSCRIPTEN)
-            glfwPostEmptyEvent();
-        #endif
-        m_redraw = true;
-    }
+    glfwPostEmptyEvent();
+    m_redraw = true;
 }
 
 void Screen::cursor_pos_callback_event(double x, double y) {
