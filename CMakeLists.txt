@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.13..3.18)
-set(CMAKE_OSX_DEPLOYMENT_TARGET 10.14)
+
+set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0) # macOS Big Sur (released Nov 2020, EOL Sep 2023)
 
 # Extract project version from source
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/include/nanogui/common.h"
@@ -454,6 +455,11 @@ if (NOT NANOGUI_SKIP_STB_IMAGE_IMPLEMENTATION)
 endif()
 
 target_include_directories(nanogui
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext/nanobind/ext/robin_map/include
+)
+
+target_include_directories(nanogui
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -508,6 +514,11 @@ if (NANOGUI_BUILD_SHARED)
   set_property(TARGET nanogui PROPERTY DEFINE_SYMBOL "")
 else()
   target_link_libraries(nanogui PUBLIC ${NANOGUI_LIBS})
+endif()
+
+if (MSVC)
+  # warning C4324: "...": structure was padded due to alignment specifier
+  target_compile_options(nanogui PRIVATE /wd4324)
 endif()
 
 target_link_libraries(nanogui PRIVATE nfd)

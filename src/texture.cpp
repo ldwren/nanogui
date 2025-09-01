@@ -3,7 +3,6 @@
 #include <stb_image.h>
 
 #include <memory>
-#include <stdexcept>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -29,7 +28,7 @@ Texture::Texture(PixelFormat pixel_format,
     init();
 }
 
-Texture::Texture(const std::string &filename,
+Texture::Texture(std::string_view filename,
                  InterpolationMode min_interpolation_mode,
                  InterpolationMode mag_interpolation_mode,
                  WrapMode wrap_mode)
@@ -42,10 +41,11 @@ Texture::Texture(const std::string &filename,
       m_mipmap_manual(false) {
     int n = 0;
     using Holder = std::unique_ptr<uint8_t[], void(*)(void*)>;
-    Holder texture_data(stbi_load(filename.c_str(), &m_size.x(), &m_size.y(), &n, 0),
+    std::string filename_str(filename);
+    Holder texture_data(stbi_load(filename_str.c_str(), &m_size.x(), &m_size.y(), &n, 0),
                         stbi_image_free);
     if (!texture_data)
-        throw std::runtime_error("Could not load texture data from file \"" + filename + "\".");
+        throw std::runtime_error("Could not load texture data from file \"" + filename_str + "\".");
 
     switch (n) {
         case 1: m_pixel_format = PixelFormat::R;    break;

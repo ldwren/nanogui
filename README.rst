@@ -22,7 +22,7 @@ available on PyPI_.
 **Note**: This repository contains an improved port of the original NanoGUI_.
 The most visible change to developers is that it no longer relies on Eigen or
 Enoki and ships with its own (absolutely minimal) vector library. Additionally,
-the the repository here incorporates the following changes:
+the repository here incorporates the following changes:
 
 1. A different set of naming conventions is used for function and variable
    names that feels more natural in a mixed C++ & Python environment.
@@ -37,20 +37,23 @@ the the repository here incorporates the following changes:
    NanoGUI includes generic wrappers around shaders and textures that work for
    all of these frameworks.
 
-3. The event loop is much more conservative by default and only issues redraw
+3. Cross-platform (macOS, Wayland, Windows) support for HDR displays and
+   extended color spaces. See `example_hdr`
+
+4. The event loop is much more conservative by default and only issues redraw
    calls when explicitly requested by an event callback.
 
-4. Python integration: the library comes with a ``pip``-compatible ``setup.py``
+5. Python integration: the library comes with a ``pip``-compatible ``setup.py``
    installation script.
 
-5. WebAssembly code generation works out of the box (requires Emscripten),
+6. WebAssembly code generation works out of the box (requires Emscripten),
    enabling powerful UI development for the web. See Tekari_ for an example of
    such an application.
 
-6. Significantly revamped tab widget (supports right-click context menus,
+7. Significantly revamped tab widget (supports right-click context menus,
    draggable, and closeable tabs) and image view widget.
 
-7. The Entypo_ icon font has been replaced by FontAwesome_ (v5.10.1).
+8. The Entypo_ icon font has been replaced by FontAwesome_ (v5.10.1).
 
 .. _NanoVG: https://github.com/memononen/NanoVG
 .. _nanobind: https://github.com/wjakob/nanobind

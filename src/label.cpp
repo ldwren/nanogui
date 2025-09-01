@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Label::Label(Widget *parent, const std::string &caption, const std::string &font, int font_size)
+Label::Label(Widget *parent, std::string_view caption, std::string_view font, int font_size)
     : Widget(parent), m_caption(caption), m_font(font) {
     if (m_theme) {
         m_font_size = m_theme->m_standard_font_size;

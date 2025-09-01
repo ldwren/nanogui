@@ -45,22 +45,22 @@ public:
      *     \ref nanogui::CheckBox::mPushed for the difference between "pushed"
      *     and "checked".
      */
-    CheckBox(Widget *parent, const std::string &caption = "Untitled",
+    CheckBox(Widget *parent, std::string_view caption = "Untitled",
              const std::function<void(bool)> &callback = std::function<void(bool)>());
 
-    /// The caption of this CheckBox.
-   const std::string &caption() const { return m_caption; }
+    /// The caption of this check box.
+    std::string_view caption() const { return m_caption; }
 
-    /// Sets the caption of this CheckBox.
-    void set_caption(const std::string &caption) { m_caption = caption; }
+    /// Sets the caption of this check box
+    void set_caption(std::string_view caption) { m_caption = caption; }
 
-    /// Whether or not this CheckBox is currently checked.
+    /// Return whether or not this widget is currently checked.
     const bool &checked() const { return m_checked; }
 
-    /// Sets whether or not this CheckBox is currently checked.
+    /// Sets whether or not this widget is currently checked
     void set_checked(const bool &checked) { m_checked = checked; }
 
-    /// Whether or not this CheckBox is currently pushed.  See \ref nanogui::CheckBox::m_pushed.
+    /// Whether or not this widget is currently pushed.  See \ref nanogui::CheckBox::m_pushed.
     const bool &pushed() const { return m_pushed; }
     void set_pushed(const bool &pushed) { m_pushed = pushed; }
 
@@ -81,6 +81,7 @@ public:
 protected:
     /// The caption text of this CheckBox.
     std::string m_caption;
+
     /**
      * Internal tracking variable to distinguish between mouse click and release.
      * \ref nanogui::CheckBox::m_callback is only called upon release.  See

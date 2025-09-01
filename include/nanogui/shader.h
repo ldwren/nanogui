@@ -19,8 +19,6 @@
 #include <nanogui/object.h>
 #include <nanogui/traits.h>
 
-#include <stdexcept>
-#include <unordered_map>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -58,22 +56,22 @@ public:
      *     The source of the fragment shader as a string.
      */
     Shader(RenderPass *render_pass,
-           const std::string &name,
-           const std::string &vertex_shader,
-           const std::string &fragment_shader,
+           std::string_view name,
+           std::string_view vertex_shader,
+           std::string_view fragment_shader,
            BlendMode blend_mode = BlendMode::None);
 
     /// Release all resources
     virtual ~Shader();
 
     /// Return the render pass associated with this shader
-    RenderPass *render_pass() { return m_render_pass; }
+    RenderPass *render_pass();
 
     /// Return the name of this shader
-    const std::string &name() const { return m_name; }
+    std::string_view name() const;
 
     /// Return the blending mode of this shader
-    BlendMode blend_mode() const { return m_blend_mode; }
+    BlendMode blend_mode() const;
 
     /**
      * \brief Upload a buffer (e.g. vertex positions) that will be associated
@@ -85,10 +83,10 @@ public:
      *
      * The buffer will be replaced if it is already present.
      */
-    void set_buffer(const std::string &name, VariableType type, size_t ndim,
+    void set_buffer(std::string_view name, VariableType type, size_t ndim,
                     const size_t *shape, const void *data);
 
-    void set_buffer(const std::string &name, VariableType type,
+    void set_buffer(std::string_view name, VariableType type,
                     std::initializer_list<size_t> shape, const void *data) {
         set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data);
     }
@@ -97,7 +95,7 @@ public:
      * \brief Upload a uniform variable (e.g. a vector or matrix) that will be
      * associated with a named shader parameter.
      */
-    template <typename Array> void set_uniform(const std::string &name,
+    template <typename Array> void set_uniform(std::string_view name,
                                                const Array &value) {
         size_t shape[3] = { 1, 1, 1 };
         size_t ndim = (size_t) -1;
@@ -148,7 +146,7 @@ public:
      *
      * The association will be replaced if it is already present.
      */
-    void set_texture(const std::string &name, Texture *texture);
+    void set_texture(std::string_view name, Texture *texture);
 
     /**
      * \brief Begin drawing using this shader
@@ -190,56 +188,18 @@ public:
                     bool indexed = false);
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-    uint32_t shader_handle() const { return m_shader_handle; }
+    uint32_t shader_handle() const;
 #elif defined(NANOGUI_USE_METAL)
-    void *pipeline_state() const { return m_pipeline_state; }
+    void *pipeline_state() const;
 #endif
 
 #if defined(NANOGUI_USE_OPENGL)
-    uint32_t vertex_array_handle() const { return m_vertex_array_handle; }
+    uint32_t vertex_array_handle() const;
 #endif
 
-protected:
-    enum BufferType {
-        Unknown = 0,
-        VertexBuffer,
-        VertexTexture,
-        VertexSampler,
-        FragmentBuffer,
-        FragmentTexture,
-        FragmentSampler,
-        UniformBuffer,
-        IndexBuffer,
-    };
-
-    struct Buffer {
-        void *buffer = nullptr;
-        BufferType type = Unknown;
-        VariableType dtype = VariableType::Invalid;
-        int index = 0;
-        size_t ndim = 0;
-        size_t shape[3] { 0, 0, 0 };
-        size_t size = 0;
-        bool dirty = false;
-
-        std::string to_string() const;
-    };
-
-protected:
-    RenderPass* m_render_pass;
-    std::string m_name;
-    std::unordered_map<std::string, Buffer> m_buffers;
-    BlendMode m_blend_mode;
-
-    #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-        uint32_t m_shader_handle = 0;
-    #  if defined(NANOGUI_USE_OPENGL)
-        uint32_t m_vertex_array_handle = 0;
-        bool m_uses_point_size = false;
-    #  endif
-    #elif defined(NANOGUI_USE_METAL)
-        void *m_pipeline_state;
-    #endif
+private:
+    struct Impl;
+    Impl *p;
 };
 
 /// Access binary data stored in nanogui_resources.cpp

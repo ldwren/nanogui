@@ -30,10 +30,10 @@ public:
         Warning
     };
 
-    MessageDialog(Widget *parent, Type type, const std::string &title = "Untitled",
-                  const std::string &message = "Message",
-                  const std::string &button_text = "OK",
-                  const std::string &alt_button_text = "Cancel", bool alt_button = false);
+    MessageDialog(Widget *parent, Type type, std::string_view title = "Untitled",
+                  std::string_view message = "Message",
+                  std::string_view button_text = "OK",
+                  std::string_view alt_button_text = "Cancel", bool alt_button = false);
 
     Label *message_label() { return m_message_label; }
     const Label *message_label() const { return m_message_label; }

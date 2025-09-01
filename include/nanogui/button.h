@@ -53,13 +53,13 @@ public:
      * \param icon
      *     The icon to display with this Button.  See \ref nanogui::Button::mIcon.
      */
-    Button(Widget *parent, const std::string &caption = "Untitled", int icon = 0);
+    Button(Widget *parent, std::string_view caption = "Untitled", int icon = 0);
 
     /// Returns the caption of this Button.
-    const std::string &caption() const { return m_caption; }
+    std::string_view caption() const { return m_caption; }
 
     /// Sets the caption of this Button.
-    void set_caption(const std::string &caption) { m_caption = caption; }
+    void set_caption(std::string_view caption) { m_caption = caption; }
 
     /// Returns the background color of this Button.
     const Color &background_color() const { return m_background_color; }

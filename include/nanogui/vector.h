@@ -11,10 +11,8 @@
 
 #include <nanogui/common.h>
 #include <nanogui/traits.h>
-#include <cassert>
 #include <cmath>
 #include <iosfwd>
-#include <string.h> // memset
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -188,7 +186,7 @@ Value squared_norm(const Array<Value, Size> &a) {
 
 template <typename Value, size_t Size>
 Value norm(const Array<Value, Size> &a) {
-    return (Value)std::sqrt(squared_norm(a));
+    return (Value) std::sqrt(squared_norm(a));
 }
 
 template <typename Value, size_t Size>
@@ -205,11 +203,27 @@ Array<Value, 3> cross(const Array<Value, 3> &a, const Array<Value, 3> &b) {
     );
 }
 
+template <typename T, std::enable_if_t<std::is_arithmetic_v<T>, int> = 0>
+T min(T a, T b) { return a < b ? a : b; }
+
+template <typename T, std::enable_if_t<std::is_arithmetic_v<T>, int> = 0>
+T max(T a, T b) { return a > b ? a : b; }
+
+template <typename T, std::enable_if_t<std::is_arithmetic_v<T>, int> = 0>
+T clip(T val, T minval, T maxval) {
+    if (val < minval)
+        return minval;
+    else if (val > maxval)
+        return maxval;
+    else
+        return val;
+}
+
 template <typename Value, size_t Size>
 Array<Value, Size> max(const Array<Value, Size> &a1, const Array<Value, Size> &a2) {
     Array<Value, Size> result;
     for (size_t i = 0; i < Size; ++i)
-        result.v[i] = std::max(a1.v[i], a2.v[i]);
+        result.v[i] = max(a1.v[i], a2.v[i]);
     return result;
 }
 
@@ -217,7 +231,15 @@ template <typename Value, size_t Size>
 Array<Value, Size> min(const Array<Value, Size> &a1, const Array<Value, Size> &a2) {
     Array<Value, Size> result;
     for (size_t i = 0; i < Size; ++i)
-        result.v[i] = std::min(a1.v[i], a2.v[i]);
+        result.v[i] = min(a1.v[i], a2.v[i]);
+    return result;
+}
+
+template <typename Value, size_t Size>
+Array<Value, Size> clip(const Array<Value, Size> &a1, const Array<Value, Size> &a2, const Array<Value, Size> &a3) {
+    Array<Value, Size> result;
+    for (size_t i = 0; i < Size; ++i)
+        result.v[i] = clip(a1.v[i], a2.v[i], a3.v[i]);
     return result;
 }
 

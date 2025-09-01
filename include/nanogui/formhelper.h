@@ -128,7 +128,7 @@ public:
 
     /// Add a new top-level window
     Window *add_window(const Vector2i &pos,
-                         const std::string &title = "Untitled") {
+                       std::string_view title = "Untitled") {
         assert(m_screen);
         m_window = new Window(m_screen, title);
         m_layout = new AdvancedGridLayout({10, 0, 10, 0}, {});
@@ -141,7 +141,7 @@ public:
     }
 
     /// Add a new group that may contain several sub-widgets
-    Label *add_group(const std::string &caption) {
+    Label *add_group(std::string_view caption) {
         Label* label = new Label(m_window, caption, m_group_font_name, m_group_font_size);
         if (m_layout->row_count() > 0)
             m_layout->append_row(m_pre_group_spacing); /* Spacing */
@@ -153,7 +153,7 @@ public:
 
     /// Add a new data widget controlled using custom getter/setter functions
     template <typename Type> detail::FormWidget<Type> *
-    add_variable(const std::string &label, const std::function<void(const Type &)> &setter,
+    add_variable(std::string_view label, const std::function<void(const Type &)> &setter,
                 const std::function<Type()> &getter, bool editable = true) {
         Label *label_w = new Label(m_window, label, m_label_font_name, m_label_font_size);
         auto widget = new detail::FormWidget<Type>(m_window);
@@ -180,7 +180,7 @@ public:
 
     /// Add a new data widget that exposes a raw variable in memory
     template <typename Type> detail::FormWidget<Type> *
-    add_variable(const std::string &label, Type &value, bool editable = true) {
+    add_variable(std::string_view label, Type &value, bool editable = true) {
         return add_variable<Type>(label,
             [&](const Type & v) { value = v; },
             [&]() -> Type { return value; },
@@ -189,7 +189,7 @@ public:
     }
 
     /// Add a button with a custom callback
-    Button *add_button(const std::string &label, const std::function<void()> &cb) {
+    Button *add_button(std::string_view label, const std::function<void()> &cb) {
         Button *button = new Button(m_window, label);
         button->set_callback(cb);
         button->set_fixed_height(25);
@@ -201,7 +201,7 @@ public:
     }
 
     /// Add an arbitrary (optionally labeled) widget to the layout
-    void add_widget(const std::string &label, Widget *widget) {
+    void add_widget(std::string_view label, Widget *widget) {
         m_layout->append_row(0);
         if (label == "") {
             m_layout->set_anchor(widget, AdvancedGridLayout::Anchor(1, m_layout->row_count()-1, 3, 1));
@@ -237,16 +237,16 @@ public:
     Vector2i fixed_size() { return m_fixed_size; }
 
     /// The font name being used for group headers.
-    const std::string &group_font_name() const { return m_group_font_name; }
+    std::string_view group_font_name() const { return m_group_font_name; }
 
     /// Sets the font name to be used for group headers.
-    void set_group_font_name(const std::string &name) { m_group_font_name = name; }
+    void set_group_font_name(std::string_view name) { m_group_font_name = name; }
 
     /// The font name being used for labels.
-    const std::string &label_font_name() const { return m_label_font_name; }
+    std::string_view label_font_name() const { return m_label_font_name; }
 
     /// Sets the font name being used for labels.
-    void set_label_font_name(const std::string &name) { m_label_font_name = name; }
+    void set_label_font_name(std::string_view name) { m_label_font_name = name; }
 
     /// The size of the font being used for group headers.
     int group_font_size() const { return m_group_font_size; }

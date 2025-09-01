@@ -42,7 +42,7 @@ public:
     /// Scroll to an absolute pixel position
     void scroll_absolute(float scroll) {
         float target = scroll / std::max(m_child_preferred_height + 8.0f - m_size.y(), 1.f);
-        m_scroll = std::max(0.f, std::min(1.f, m_scroll + target));
+        m_scroll = clip(m_scroll + target, 0.f, 1.f);
     }
 
     virtual void perform_layout(NVGcontext *ctx) override;

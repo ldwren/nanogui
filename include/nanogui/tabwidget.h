@@ -14,8 +14,6 @@
 #pragma once
 
 #include <nanogui/widget.h>
-#include <functional>
-#include <unordered_map>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -29,7 +27,7 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT TabWidgetBase : public Widget {
 public:
     /// Construct a new tab widget
-    TabWidgetBase(Widget *parent, const std::string &font = "sans-bold");
+    TabWidgetBase(Widget *parent, std::string_view font = "sans-bold");
 
     /// Return the total number of tabs
     int tab_count() const { return (int) m_tab_captions.size(); }
@@ -41,10 +39,10 @@ public:
     int tab_index(int id) const;
 
     /// Inserts a new tab at the specified position and returns its ID.
-    int insert_tab(int index, const std::string &caption);
+    int insert_tab(int index, std::string_view caption);
 
     /// Appends a new tab and returns its ID.
-    int append_tab(const std::string &caption);
+    int append_tab(std::string_view caption);
 
     /// Removes a tab with the specified ID
     virtual void remove_tab(int id);
@@ -62,7 +60,7 @@ public:
     /// Return the caption of the tab with the given ID
     const std::string& tab_caption(int id) const { return m_tab_captions[tab_index(id)]; }
     /// Change the caption of the tab with the given ID
-    void set_tab_caption(int id, const std::string &caption) { m_tab_captions[tab_index(id)] = caption; }
+    void set_tab_caption(int id, std::string_view caption) { m_tab_captions[tab_index(id)] = caption; }
 
     /// Return whether tabs provide a close button
     bool tabs_closeable() const { return m_tabs_closeable; }
@@ -182,13 +180,13 @@ protected:
 class NANOGUI_EXPORT TabWidget : public TabWidgetBase {
 public:
     /// Construct a new tab widget
-    TabWidget(Widget *parent, const std::string &font = "sans-bold");
+    TabWidget(Widget *parent, std::string_view font = "sans-bold");
 
     /// Inserts a new tab at the specified position and returns its ID.
-    int insert_tab(int index, const std::string &caption, Widget *widget);
+    int insert_tab(int index, std::string_view caption, Widget *widget);
 
     /// Appends a new tab and returns its ID.
-    int append_tab(const std::string &caption, Widget *widget);
+    int append_tab(std::string_view caption, Widget *widget);
 
     /// Removes a tab with the specified ID
     virtual void remove_tab(int id) override;
@@ -204,7 +202,7 @@ public:
 protected:
     virtual void update_visibility() override;
 protected:
-    std::unordered_map<int, Widget *> m_widgets;
+    std::vector<std::pair<int, Widget *>> m_widgets;
     bool m_remove_children = true;
 };
 

@@ -30,10 +30,10 @@ public:
     TextArea(Widget *parent);
 
     /// Set the used font
-    void set_font(const std::string &font) { m_font = font; }
+    void set_font(std::string_view font) { m_font = font; }
 
     /// Return the used font
-    const std::string &font() const { return m_font; }
+    std::string_view font() const { return m_font; }
 
     /// Set the foreground color (applies to all subsequently added text)
     void set_foreground_color(const Color &color) {
@@ -78,11 +78,11 @@ public:
     int is_selectable() const { return m_selectable; }
 
     /// Append text at the end of the widget
-    void append(const std::string &text);
+    void append(std::string_view text);
 
     /// Append a line of text at the bottom
-    void append_line(const std::string &text) {
-        append(text + "\n");
+    void append_line(std::string_view text) {
+        append(std::string(text) + "\n");
     }
 
     /// Clear all current contents

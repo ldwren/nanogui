@@ -26,18 +26,18 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT Label : public Widget {
 public:
-    Label(Widget *parent, const std::string &caption,
-          const std::string &font = "sans", int font_size = -1);
+    Label(Widget *parent, std::string_view caption,
+          std::string_view font = "sans", int font_size = -1);
 
     /// Get the label's text caption
-    const std::string &caption() const { return m_caption; }
+    std::string_view caption() const { return m_caption; }
     /// Set the label's text caption
-    void set_caption(const std::string &caption) { m_caption = caption; }
+    void set_caption(std::string_view caption) { m_caption = caption; }
 
     /// Set the currently active font (2 are available by default: 'sans' and 'sans-bold')
-    void set_font(const std::string &font) { m_font = font; }
+    void set_font(std::string_view font) { m_font = font; }
     /// Get the currently active font
-    const std::string &font() const { return m_font; }
+    std::string_view font() const { return m_font; }
 
     /// Get the label color
     Color color() const { return m_color; }

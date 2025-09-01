@@ -12,10 +12,11 @@
 #include <nanogui/screen.h>
 #include <nanogui/opengl.h>
 #include <nanogui/metal.h>
-#include <unordered_map>
+
+#include <tsl/robin_map.h>
 
 #include <mutex>
-#include <stdexcept>
+#include <cstring>
 
 #if defined(__APPLE__)
 #  define GLFW_EXPOSE_NATIVE_COCOA
@@ -38,7 +39,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-extern std::unordered_map<GLFWwindow *, Screen *> __nanogui_screens;
+extern std::vector<std::pair<GLFWwindow *, Screen *>> __nanogui_screens;
 
 #if defined(__APPLE__)
   extern void disable_saved_application_state_osx();
@@ -89,7 +90,6 @@ static float emscripten_refresh = 0;
 std::mutex m_async_mutex;
 std::vector<std::function<void()>> m_async_functions;
 static RunMode current_run_mode = RunMode::Stopped;
-
 
 static void mainloop_iteration() {
     int num_screens = 0;
@@ -223,16 +223,16 @@ std::string utf8(uint32_t c) {
     return std::string(seq, seq + n);
 }
 
-static std::unordered_map<std::string, int> icon_cache;
+static tsl::robin_map<std::string, int, std::hash<std::string_view>, std::equal_to<>> icon_cache;
 
-int __nanogui_get_image(NVGcontext *ctx, const std::string &name, uint8_t *data, uint32_t size) {
+int __nanogui_get_image(NVGcontext *ctx, std::string_view name, uint8_t *data, uint32_t size) {
     auto it = icon_cache.find(name);
     if (it != icon_cache.end())
         return it->second;
     int icon_id = nvgCreateImageMem(ctx, 0, data, size);
     if (icon_id == 0)
         throw std::runtime_error("Unable to load resource data.");
-    icon_cache[name] = icon_id;
+    icon_cache[std::string(name)] = icon_id;
     return icon_id;
 }
 
@@ -257,7 +257,7 @@ load_image_directory(NVGcontext *ctx, const std::string &path) {
 #endif
         if (strstr(fname, "png") == nullptr)
             continue;
-        std::string full_name = path + "/" + std::string(fname);
+        std::string full_name = path + "/" + fname;
         int img = nvgCreateImage(ctx, full_name.c_str(), 0);
         if (img == 0)
             throw std::runtime_error("Could not open image data!");

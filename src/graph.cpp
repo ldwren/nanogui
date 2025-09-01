@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Graph::Graph(Widget *parent, const std::string &caption)
+Graph::Graph(Widget *parent, std::string_view caption)
     : Widget(parent), m_caption(caption) {
     m_background_color = Color(20, 128);
     m_fill_color = Color(255, 192, 0, 128);

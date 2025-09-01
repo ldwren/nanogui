@@ -21,7 +21,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TabWidgetBase::TabWidgetBase(Widget *parent, const std::string &font)
+TabWidgetBase::TabWidgetBase(Widget *parent, std::string_view font)
     : Widget(parent), m_font(font), m_background_color(Color(0.f, 0.f)) {
     m_tab_offsets.push_back(0);
 }
@@ -42,9 +42,9 @@ void TabWidgetBase::remove_tab(int id) {
     }
 }
 
-int TabWidgetBase::insert_tab(int index, const std::string &caption) {
+int TabWidgetBase::insert_tab(int index, std::string_view caption) {
     int id = m_tab_counter++;
-    m_tab_captions.insert(m_tab_captions.begin() + index, caption);
+    m_tab_captions.insert(m_tab_captions.begin() + index, std::string(caption));
     m_tab_ids.insert(m_tab_ids.begin() + index, id);
     TabWidgetBase::perform_layout(screen()->nvg_context());
     if (index < m_active_tab)
@@ -57,7 +57,7 @@ int TabWidgetBase::insert_tab(int index, const std::string &caption) {
     return id;
 }
 
-int TabWidgetBase::append_tab(const std::string &caption) {
+int TabWidgetBase::append_tab(std::string_view caption) {
     return insert_tab((int) m_tab_captions.size(), caption);
 }
 
@@ -80,8 +80,8 @@ void TabWidgetBase::perform_layout(NVGcontext* ctx) {
     m_tab_offsets.clear();
     int width = 0;
     float unused[4];
-    for (const std::string &label : m_tab_captions) {
-        int label_width = nvgTextBounds(ctx, 0, 0, label.c_str(), nullptr, unused);
+    for (std::string_view label : m_tab_captions) {
+        int label_width = nvgTextBounds(ctx, 0, 0, label.data(), label.data() + label.size(), unused);
         m_tab_offsets.push_back(width);
         width += label_width + 2 * m_theme->m_tab_button_horizontal_padding;
         if (m_tabs_closeable)
@@ -100,9 +100,9 @@ Vector2i TabWidgetBase::preferred_size(NVGcontext* ctx) const {
     nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 
     int width = 0;
-    for (const std::string &label : m_tab_captions) {
+    for (std::string_view label : m_tab_captions) {
         float unused[4];
-        int label_width = nvgTextBounds(ctx, 0, 0, label.c_str(), nullptr, unused);
+        int label_width = nvgTextBounds(ctx, 0, 0, label.data(), label.data() + label.size(), unused);
         width += label_width + 2 * m_theme->m_tab_button_horizontal_padding;
         if (m_tabs_closeable)
             width += m_close_width;
@@ -369,7 +369,7 @@ bool TabWidgetBase::mouse_motion_event(const Vector2i &p, const Vector2i &rel,
     return Widget::mouse_motion_event(p, rel, button, modifiers);
 }
 
-TabWidget::TabWidget(Widget *parent, const std::string &font)
+TabWidget::TabWidget(Widget *parent, std::string_view font)
     : TabWidgetBase(parent, font) { }
 
 void TabWidget::perform_layout(NVGcontext* ctx) {
@@ -389,9 +389,13 @@ void TabWidget::update_visibility() {
         return;
     for (Widget *child : m_children)
         child->set_visible(false);
-    auto it = m_widgets.find(selected_id());
-    if (it != m_widgets.end())
-        it->second->set_visible(true);
+    int id = selected_id();
+    for (const auto &pair : m_widgets) {
+        if (pair.first == id) {
+            pair.second->set_visible(true);
+            break;
+        }
+    }
 }
 
 Vector2i TabWidget::preferred_size(NVGcontext* ctx) const {
@@ -406,26 +410,32 @@ Vector2i TabWidget::preferred_size(NVGcontext* ctx) const {
     );
 }
 
-int TabWidget::insert_tab(int index, const std::string &caption, Widget *widget) {
+int TabWidget::insert_tab(int index, std::string_view caption, Widget *widget) {
     int id = TabWidgetBase::insert_tab(index, caption);
-    m_widgets[id] = widget;
+    m_widgets.emplace_back(id, widget);
     update_visibility();
     return id;
 }
 
-int TabWidget::append_tab(const std::string &caption, Widget *widget) {
+int TabWidget::append_tab(std::string_view caption, Widget *widget) {
     widget->set_visible(false);
     int id = TabWidgetBase::append_tab(caption);
-    m_widgets[id] = widget;
+    m_widgets.emplace_back(id, widget);
     update_visibility();
     return id;
 }
 
 void TabWidget::remove_tab(int id) {
     TabWidgetBase::remove_tab(id);
-    Widget *widget = m_widgets[id];
-    m_widgets.erase(id);
-    if (m_remove_children)
+    Widget *widget = nullptr;
+    for (auto it = m_widgets.begin(); it != m_widgets.end(); ++it) {
+        if (it->first == id) {
+            widget = it->second;
+            m_widgets.erase(it);
+            break;
+        }
+    }
+    if (widget && m_remove_children)
         remove_child(widget);
 }
 

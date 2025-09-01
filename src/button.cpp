@@ -16,7 +16,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Button::Button(Widget *parent, const std::string &caption, int icon)
+Button::Button(Widget *parent, std::string_view caption, int icon)
     : Widget(parent), m_caption(caption), m_icon(icon),
       m_icon_position(IconPosition::LeftCentered), m_pushed(false),
       m_flags(NormalButton), m_background_color(Color(0, 0)),

@@ -17,7 +17,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Window::Window(Widget *parent, const std::string &title)
+Window::Window(Widget *parent, std::string_view title)
     : Widget(parent), m_title(title), m_button_panel(nullptr), m_modal(false),
       m_drag(false) { }
 

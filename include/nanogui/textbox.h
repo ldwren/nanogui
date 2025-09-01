@@ -40,7 +40,7 @@ public:
         Right
     };
 
-    TextBox(Widget *parent, const std::string &value = "Untitled");
+    TextBox(Widget *parent, std::string_view value = "Untitled");
 
     bool editable() const { return m_editable; }
     void set_editable(bool editable);
@@ -49,35 +49,35 @@ public:
     void set_spinnable(bool spinnable) { m_spinnable = spinnable; }
 
     const std::string &value() const { return m_value; }
-    void set_value(const std::string &value) { m_value = value; }
+    void set_value(std::string_view value) { m_value = value; }
 
-    const std::string &default_value() const { return m_default_value; }
-    void set_default_value(const std::string &default_value) { m_default_value = default_value; }
+    std::string_view default_value() const { return m_default_value; }
+    void set_default_value(std::string_view default_value) { m_default_value = default_value; }
 
     Alignment alignment() const { return m_alignment; }
     void set_alignment(Alignment align) { m_alignment = align; }
 
-    const std::string &units() const { return m_units; }
-    void set_units(const std::string &units) { m_units = units; }
+    std::string_view units() const { return m_units; }
+    void set_units(std::string_view units) { m_units = units; }
 
     int units_image() const { return m_units_image; }
     void set_units_image(int image) { m_units_image = image; }
 
     /// Return the underlying regular expression specifying valid formats
-    const std::string &format() const { return m_format; }
+    std::string_view format() const { return m_format; }
     /// Specify a regular expression specifying valid formats
-    void set_format(const std::string &format) { m_format = format; }
+    void set_format(std::string_view format) { m_format = format; }
 
     /// Return the placeholder text to be displayed while the text box is empty.
-    const std::string &placeholder() const { return m_placeholder; }
+    std::string_view placeholder() const { return m_placeholder; }
     /// Specify a placeholder text to be displayed while the text box is empty.
-    void set_placeholder(const std::string &placeholder) { m_placeholder = placeholder; }
+    void set_placeholder(std::string_view placeholder) { m_placeholder = placeholder; }
 
     /// Set the \ref Theme used to draw this widget
     virtual void set_theme(Theme *theme) override;
 
     /// The callback to execute when the value of this TextBox has changed.
-    const std::function<bool(const std::string& str)> &callback() const { return m_callback; }
+    const std::function<bool(const std::string &str)> &callback() const { return m_callback; }
 
     /// Sets the callback to execute when the value of this TextBox has changed.
     void set_callback(const std::function<bool(const std::string& str)> &callback) { m_callback = callback; }
@@ -140,7 +140,7 @@ protected:
     std::string m_units;
     std::string m_format;
     int m_units_image;
-    std::function<bool(const std::string& str)> m_callback;
+    std::function<bool(const std::string&)> m_callback;
     bool m_valid_format;
     std::string m_value_temp;
     std::string m_placeholder;
@@ -183,8 +183,7 @@ public:
     }
 
     void set_value(Scalar value) {
-        Scalar clamped_value = std::min(std::max(value, m_min_value),m_max_value);
-        TextBox::set_value(std::to_string(clamped_value));
+        TextBox::set_value(std::to_string(clip(value, m_min_value, m_max_value)));
     }
 
     void set_callback(const std::function<void(Scalar)> &cb) {
@@ -297,16 +296,15 @@ public:
 
     std::string number_format() const { return m_number_format; }
 
-    void number_format(const std::string &format) { m_number_format = format; }
+    void number_format(std::string_view format) { m_number_format = format; }
 
     Scalar value() const {
         return (Scalar) std::stod(TextBox::value());
     }
 
     void set_value(Scalar value) {
-        Scalar clamped_value = std::min(std::max(value, m_min_value),m_max_value);
         char buffer[50];
-        std::snprintf(buffer, 50, m_number_format.c_str(), clamped_value);
+        std::snprintf(buffer, 50, m_number_format.c_str(), clip(value, m_min_value, m_max_value));
         TextBox::set_value(buffer);
     }
 

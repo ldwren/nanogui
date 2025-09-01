@@ -20,7 +20,6 @@
 #include <nanogui/opengl.h>
 #include "opengl_check.h"
 
-#include <stdexcept>
 
 NAMESPACE_BEGIN(nanogui)
 

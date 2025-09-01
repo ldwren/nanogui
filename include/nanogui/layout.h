@@ -17,10 +17,6 @@
 
 #include <nanogui/object.h>
 #include <nanogui/vector.h>
-#include <unordered_map>
-
-#include <stdexcept>
-#include <vector>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -383,12 +379,12 @@ public:
      * \brief Helper struct to coordinate anchor points for the layout.
      */
     struct Anchor {
-        uint8_t pos[2];    ///< The ``(x, y)`` position.
-        uint8_t size[2];   ///< The ``(x, y)`` size.
-        Alignment align[2];///< The ``(x, y)`` Alignment.
+        uint8_t pos[2] = {0, 0};    ///< The ``(x, y)`` position.
+        uint8_t size[2] = {0, 0};   ///< The ``(x, y)`` size.
+        Alignment align[2] = {Alignment::Fill, Alignment::Fill};///< The ``(x, y)`` Alignment.
 
         /// Creates a ``0`` Anchor.
-        Anchor() { }
+        Anchor() = default;
 
         /// Create an Anchor at position ``(x, y)`` with specified Alignment.
         Anchor(int x, int y, Alignment horiz = Alignment::Fill,
@@ -419,39 +415,37 @@ public:
     /// Creates an AdvancedGridLayout with specified columns, rows, and margin.
     AdvancedGridLayout(const std::vector<int> &cols = {}, const std::vector<int> &rows = {}, int margin = 0);
 
+    /// Destructor
+    virtual ~AdvancedGridLayout();
+
     /// The margin of this AdvancedGridLayout.
-    int margin() const { return m_margin; }
+    int margin() const;
     /// Sets the margin of this AdvancedGridLayout.
-    void set_margin(int margin) { m_margin = margin; }
+    void set_margin(int margin);
 
     /// Return the number of cols
-    int col_count() const { return (int) m_cols.size(); }
+    int col_count() const;
 
     /// Return the number of rows
-    int row_count() const { return (int) m_rows.size(); }
+    int row_count() const;
 
     /// Append a row of the given size (and stretch factor)
-    void append_row(int size, float stretch = 0.f) { m_rows.push_back(size); m_row_stretch.push_back(stretch); }
+    void append_row(int size, float stretch = 0.f);
 
     /// Append a column of the given size (and stretch factor)
-    void append_col(int size, float stretch = 0.f) { m_cols.push_back(size); m_col_stretch.push_back(stretch); }
+    void append_col(int size, float stretch = 0.f);
 
     /// Set the stretch factor of a given row
-    void set_row_stretch(int index, float stretch) { m_row_stretch.at(index) = stretch; }
+    void set_row_stretch(int index, float stretch);
 
     /// Set the stretch factor of a given column
-    void set_col_stretch(int index, float stretch) { m_col_stretch.at(index) = stretch; }
+    void set_col_stretch(int index, float stretch);
 
     /// Specify the anchor data structure for a given widget
-    void set_anchor(const Widget *widget, const Anchor &anchor) { m_anchor[widget] = anchor; }
+    void set_anchor(const Widget *widget, const Anchor &anchor);
 
     /// Retrieve the anchor data structure for a given widget
-    Anchor anchor(const Widget *widget) const {
-        auto it = m_anchor.find(widget);
-        if (it == m_anchor.end())
-            throw std::runtime_error("Widget was not registered with the grid layout!");
-        return it->second;
-    }
+    Anchor anchor(const Widget *widget) const;
 
     /* Implementation of the layout interface */
 
@@ -466,24 +460,9 @@ protected:
     void compute_layout(NVGcontext *ctx, const Widget *widget,
                         std::vector<int> *grid) const;
 
-protected:
-    /// The columns of this AdvancedGridLayout.
-    std::vector<int> m_cols;
-
-    /// The rows of this AdvancedGridLayout.
-    std::vector<int> m_rows;
-
-    /// The stretch for each column of this AdvancedGridLayout.
-    std::vector<float> m_col_stretch;
-
-    /// The stretch for each row of this AdvancedGridLayout.
-    std::vector<float> m_row_stretch;
-
-    /// The mapping of widgets to their specified anchor points.
-    std::unordered_map<const Widget *, Anchor> m_anchor;
-
-    /// The margin around this AdvancedGridLayout.
-    int m_margin;
+private:
+    struct Impl;
+    Impl *p;
 };
 
 NAMESPACE_END(nanogui)

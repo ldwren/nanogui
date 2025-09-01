@@ -67,16 +67,16 @@ public:
     void set_color(const Color& color);
 
     /// The current caption of the \ref nanogui::ColorPicker::m_pick_button.
-    const std::string &pick_button_caption() { return m_pick_button->caption(); }
+    std::string_view pick_button_caption() { return m_pick_button->caption(); }
 
     /// Sets the current caption of the \ref nanogui::ColorPicker::m_pick_button.
-    void set_pick_button_caption(const std::string &caption) { m_pick_button->set_caption(caption); }
+    void set_pick_button_caption(std::string_view caption) { m_pick_button->set_caption(caption); }
 
     /// The current caption of the \ref nanogui::ColorPicker::m_reset_button.
-    const std::string &reset_button_caption() { return m_reset_button->caption(); }
+    std::string_view reset_button_caption() { return m_reset_button->caption(); }
 
     /// Sets the current caption of the \ref nanogui::ColorPicker::m_reset_button.
-    void set_reset_button_caption(const std::string &caption) { m_reset_button->set_caption(caption); }
+    void set_reset_button_caption(std::string_view caption) { m_reset_button->set_caption(caption); }
 protected:
     /// The "fast" callback executed when the ColorWheel has changed.
     std::function<void(const Color &)> m_callback;

@@ -8,7 +8,6 @@
 #include <nanogui/chroma.h>
 #include <algorithm>
 #include <cmath>
-#include <vector>
 
 using namespace nanogui;
 using namespace nanogui::ituth273;

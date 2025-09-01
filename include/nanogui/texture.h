@@ -121,7 +121,7 @@ public:
             bool mipmap_manual = false);
 
     /// Load an image from the given file using stb-image
-    Texture(const std::string &filename,
+    Texture(std::string_view filename,
             InterpolationMode min_interpolation_mode = InterpolationMode::Bilinear,
             InterpolationMode mag_interpolation_mode = InterpolationMode::Bilinear,
             WrapMode wrap_mode                       = WrapMode::ClampToEdge);

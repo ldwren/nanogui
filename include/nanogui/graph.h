@@ -23,16 +23,16 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT Graph : public Widget {
 public:
-    Graph(Widget *parent, const std::string &caption = "Untitled");
+    Graph(Widget *parent, std::string_view caption = "Untitled");
 
-    const std::string &caption() const { return m_caption; }
-    void set_caption(const std::string &caption) { m_caption = caption; }
+    std::string_view caption() const { return m_caption; }
+    void set_caption(std::string_view caption) { m_caption = caption; }
 
-    const std::string &header() const { return m_header; }
-    void set_header(const std::string &header) { m_header = header; }
+    std::string_view header() const { return m_header; }
+    void set_header(std::string_view header) { m_header = header; }
 
-    const std::string &footer() const { return m_footer; }
-    void set_footer(const std::string &footer) { m_footer = footer; }
+    std::string_view footer() const { return m_footer; }
+    void set_footer(std::string_view footer) { m_footer = footer; }
 
     const Color &background_color() const { return m_background_color; }
     void set_background_color(const Color &background_color) { m_background_color = background_color; }

@@ -17,6 +17,7 @@
 #include <nanogui/theme.h>
 #include <nanogui/label.h>
 #include <numeric>
+#include <tsl/robin_map.h>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -341,10 +342,73 @@ void GridLayout::perform_layout(NVGcontext *ctx, Widget *widget) const {
     }
 }
 
+// Implementation struct for AdvancedGridLayout
+struct AdvancedGridLayout::Impl {
+    /// The columns of this AdvancedGridLayout.
+    std::vector<int> cols;
+
+    /// The rows of this AdvancedGridLayout.
+    std::vector<int> rows;
+
+    /// The stretch for each column of this AdvancedGridLayout.
+    std::vector<float> col_stretch;
+
+    /// The stretch for each row of this AdvancedGridLayout.
+    std::vector<float> row_stretch;
+
+    /// The mapping of widgets to their specified anchor points.
+    tsl::robin_pg_map<const Widget *, AdvancedGridLayout::Anchor> anchor;
+
+    /// The margin around this AdvancedGridLayout.
+    int margin;
+};
+
 AdvancedGridLayout::AdvancedGridLayout(const std::vector<int> &cols, const std::vector<int> &rows, int margin)
- : m_cols(cols), m_rows(rows), m_margin(margin) {
-    m_col_stretch.resize(m_cols.size(), 0);
-    m_row_stretch.resize(m_rows.size(), 0);
+ : p(new Impl()) {
+    p->cols = cols;
+    p->rows = rows;
+    p->margin = margin;
+    p->col_stretch.resize(p->cols.size(), 0);
+    p->row_stretch.resize(p->rows.size(), 0);
+}
+
+AdvancedGridLayout::~AdvancedGridLayout() {
+    delete p;
+}
+
+int AdvancedGridLayout::margin() const { return p->margin; }
+void AdvancedGridLayout::set_margin(int margin) { p->margin = margin; }
+
+int AdvancedGridLayout::col_count() const { return (int) p->cols.size(); }
+int AdvancedGridLayout::row_count() const { return (int) p->rows.size(); }
+
+void AdvancedGridLayout::append_row(int size, float stretch) {
+    p->rows.push_back(size);
+    p->row_stretch.push_back(stretch);
+}
+
+void AdvancedGridLayout::append_col(int size, float stretch) {
+    p->cols.push_back(size);
+    p->col_stretch.push_back(stretch);
+}
+
+void AdvancedGridLayout::set_row_stretch(int index, float stretch) {
+    p->row_stretch.at(index) = stretch;
+}
+
+void AdvancedGridLayout::set_col_stretch(int index, float stretch) {
+    p->col_stretch.at(index) = stretch;
+}
+
+void AdvancedGridLayout::set_anchor(const Widget *widget, const Anchor &anchor) {
+    p->anchor.insert_or_assign(widget, anchor);
+}
+
+AdvancedGridLayout::Anchor AdvancedGridLayout::anchor(const Widget *widget) const {
+    auto it = p->anchor.find(widget);
+    if (it == p->anchor.end())
+        throw std::runtime_error("Widget was not registered with the grid layout!");
+    return it->second;
 }
 
 Vector2i AdvancedGridLayout::preferred_size(NVGcontext *ctx, const Widget *widget) const {
@@ -356,10 +420,10 @@ Vector2i AdvancedGridLayout::preferred_size(NVGcontext *ctx, const Widget *widge
         std::accumulate(grid[0].begin(), grid[0].end(), 0),
         std::accumulate(grid[1].begin(), grid[1].end(), 0));
 
-    Vector2i extra(2 * m_margin);
+    Vector2i extra(2 * p->margin);
     const Window *window = dynamic_cast<const Window *>(widget);
     if (window && !window->title().empty())
-        extra[1] += widget->theme()->m_window_header_height - m_margin/2;
+        extra[1] += widget->theme()->m_window_header_height - p->margin/2;
 
     return size+extra;
 }
@@ -368,12 +432,12 @@ void AdvancedGridLayout::perform_layout(NVGcontext *ctx, Widget *widget) const {
     std::vector<int> grid[2];
     compute_layout(ctx, widget, grid);
 
-    grid[0].insert(grid[0].begin(), m_margin);
+    grid[0].insert(grid[0].begin(), p->margin);
     const Window *window = dynamic_cast<const Window *>(widget);
     if (window && !window->title().empty())
-        grid[1].insert(grid[1].begin(), widget->theme()->m_window_header_height + m_margin/2);
+        grid[1].insert(grid[1].begin(), widget->theme()->m_window_header_height + p->margin/2);
     else
-        grid[1].insert(grid[1].begin(), m_margin);
+        grid[1].insert(grid[1].begin(), p->margin);
 
     for (int axis=0; axis<2; ++axis) {
         for (size_t i=1; i<grid[axis].size(); ++i)
@@ -421,21 +485,21 @@ void AdvancedGridLayout::compute_layout(NVGcontext *ctx, const Widget *widget,
         fs_w[1] ? fs_w[1] : widget->height()
     );
 
-    Vector2i extra(2 * m_margin);
+    Vector2i extra(2 * p->margin);
     const Window *window = dynamic_cast<const Window *>(widget);
     if (window && !window->title().empty())
-        extra[1] += widget->theme()->m_window_header_height - m_margin/2;
+        extra[1] += widget->theme()->m_window_header_height - p->margin/2;
 
     container_size -= extra;
 
     for (int axis = 0; axis < 2; ++axis) {
         std::vector<int> &grid = _grid[axis];
-        const std::vector<int> &sizes = axis == 0 ? m_cols : m_rows;
-        const std::vector<float> &stretch = axis == 0 ? m_col_stretch : m_row_stretch;
+        const std::vector<int> &sizes = axis == 0 ? p->cols : p->rows;
+        const std::vector<float> &stretch = axis == 0 ? p->col_stretch : p->row_stretch;
         grid = sizes;
 
         for (int phase = 0; phase < 2; ++phase) {
-            for (auto pair : m_anchor) {
+            for (auto pair : p->anchor) {
                 const Widget *w = pair.first;
                 if (!w->visible() || dynamic_cast<const Window *>(w) != nullptr)
                     continue;

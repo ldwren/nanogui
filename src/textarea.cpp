@@ -23,32 +23,35 @@ TextArea::TextArea(Widget *parent) : Widget(parent),
   m_max_size(0), m_padding(0), m_selectable(true),
   m_selection_start(-1), m_selection_end(-1) { }
 
-void TextArea::append(const std::string &text) {
+void TextArea::append(std::string_view text) {
     NVGcontext *ctx = screen()->nvg_context();
 
     nvgFontSize(ctx, font_size());
     nvgFontFace(ctx, m_font.c_str());
 
-    const char *str = text.c_str();
-    do {
-        const char *begin = str;
+    const char *cur = text.data(),
+               *end = cur + text.length();
 
-        while (*str != 0 && *str != '\n')
-            str++;
+    while (cur < end) {
+        const char *line_end = cur;
 
-        std::string line(begin, str);
-        if (line.empty())
-            continue;
+        while (line_end < end && *line_end != '\n')
+            line_end++;
+
+        std::string line(cur, line_end);
         int width = nvgTextBounds(ctx, 0, 0, line.c_str(), nullptr, nullptr);
-        m_blocks.push_back(Block { m_offset, width, line, m_foreground_color });
+        m_blocks.push_back(Block { m_offset, width, std::move(line), m_foreground_color });
 
         m_offset.x() += width;
         m_max_size = max(m_max_size, m_offset);
-        if (*str == '\n') {
+
+        if (line_end < end && *line_end == '\n') {
             m_offset = Vector2i(0, m_offset.y() + font_size());
             m_max_size = max(m_max_size, m_offset);
         }
-    } while (*str++ != 0);
+
+        cur = line_end + 1;
+    }
 
     VScrollPanel *vscroll = dynamic_cast<VScrollPanel *>(m_parent);
     if (vscroll)

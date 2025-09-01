@@ -81,7 +81,7 @@ public:
      */
     Screen(
         const Vector2i &size,
-        const std::string &caption = "Unnamed",
+        std::string_view caption = "Unnamed",
         bool resizable = true,
         bool maximized = false,
         bool fullscreen = false,
@@ -96,10 +96,10 @@ public:
     virtual ~Screen();
 
     /// Get the window title bar caption
-    const std::string &caption() const { return m_caption; }
+    std::string_view caption() const { return m_caption; }
 
     /// Set the window title bar caption
-    void set_caption(const std::string &caption);
+    void set_caption(std::string_view caption);
 
     /// Return the screen's background color
     const Color &background() const { return m_background; }
@@ -312,7 +312,6 @@ protected:
     bool m_drag_active;
     Widget *m_drag_widget = nullptr;
     double m_last_interaction;
-    bool m_process_events = true;
     Color m_background;
     std::string m_caption;
     bool m_shutdown_glfw;

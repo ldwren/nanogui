@@ -44,15 +44,8 @@ jobs:
             -DNANOGUI_BUILD_SHARED=${{ env.BUILD_SHARED }} `
             "-DPython_EXECUTABLE=$(python -c 'import sys; print(sys.executable)')"
 
-      - name: Configure (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          cmake -S . -B build \
-            -DNANOGUI_BUILD_SHARED=${{ env.BUILD_SHARED }} \
-            "-DPython_EXECUTABLE=$(python3 -c 'import sys; print(sys.executable)')"
-
-      - name: Configure (macOS)
-        if: runner.os == 'macOS'
+      - name: Configure (Linux/macOS)
+        if: runner.os == 'Linux' || runner.os == 'macOS'
         run: |
           cmake -S . -B build \
             -DNANOGUI_BUILD_SHARED=${{ env.BUILD_SHARED }} \

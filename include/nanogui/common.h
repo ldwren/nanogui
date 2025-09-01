@@ -15,13 +15,15 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include <algorithm>
+#include <cstdint>
 #include <array>
+#include <utility>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <vector>
+#include <stdexcept>
+#include <cassert>
 
 #define NANOGUI_VERSION_MAJOR 0
 #define NANOGUI_VERSION_MINOR 2
@@ -349,7 +351,7 @@ extern NANOGUI_EXPORT std::vector<std::pair<int, std::string>>
 /// Convenience function for instanting a PNG icon from the application's data segment (via bin2c)
 #define nvgImageIcon(ctx, name) nanogui::__nanogui_get_image(ctx, #name, name##_png, name##_png_size)
 /// Helper function used by nvg_image_icon
-extern NANOGUI_EXPORT int __nanogui_get_image(NVGcontext *ctx, const std::string &name,
+extern NANOGUI_EXPORT int __nanogui_get_image(NVGcontext *ctx, std::string_view name,
                                               uint8_t *data, uint32_t size);
 
 static const size_t DITHER_MATRIX_SIZE = 8;

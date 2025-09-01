@@ -24,12 +24,12 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT Window : public Widget {
     friend class Popup;
 public:
-    Window(Widget *parent, const std::string &title = "Untitled");
+    Window(Widget *parent, std::string_view title = "Untitled");
 
     /// Return the window title
-    const std::string &title() const { return m_title; }
+    std::string_view title() const { return m_title; }
     /// Set the window title
-    void set_title(const std::string &title) { m_title = title; }
+    void set_title(std::string_view title) { m_title = title; }
 
     /// Is this a model dialog?
     bool modal() const { return m_modal; }

@@ -15,8 +15,6 @@
 #include <nanogui/object.h>
 #include <nanogui/theme.h>
 
-#include <vector>
-
 NAMESPACE_BEGIN(nanogui)
 
 enum class Cursor; // do not put a docstring, this is already documented
@@ -186,8 +184,8 @@ public:
     /// Request the focus to be moved to this widget
     void request_focus();
 
-    const std::string &tooltip() const { return m_tooltip; }
-    void set_tooltip(const std::string &tooltip) { m_tooltip = tooltip; }
+    std::string_view tooltip() const { return m_tooltip; }
+    void set_tooltip(std::string_view tooltip) { m_tooltip = tooltip; }
 
     /// Return current font size. If not set the default of the current theme will be returned
     int font_size() const;

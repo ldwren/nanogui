@@ -4,6 +4,8 @@
 #include <nanogui/texture.h>
 #include <nanogui/renderpass.h>
 #include "opengl_check.h"
+#include "shader_impl.h"
+#include <cstring>
 
 #if !defined(GL_HALF_FLOAT)
 #  define GL_HALF_FLOAT 0x140B
@@ -12,14 +14,15 @@
 NAMESPACE_BEGIN(nanogui)
 
 static GLuint compile_gl_shader(GLenum type,
-                                const std::string &name,
-                                const std::string &shader_string) {
+                                std::string_view name,
+                                std::string_view shader_string) {
     if (shader_string.empty())
         return (GLuint) 0;
 
     GLuint id = glCreateShader(type);
-    const char *shader_string_const = shader_string.c_str();
-    CHK(glShaderSource(id, 1, &shader_string_const, nullptr));
+    const GLint length = (GLint) shader_string.length();
+    const GLchar *str = shader_string.data();
+    CHK(glShaderSource(id, 1, &str, &length));
     CHK(glCompileShader(id));
 
     GLint status;
@@ -42,7 +45,7 @@ static GLuint compile_gl_shader(GLenum type,
         CHK(glGetShaderInfoLog(id, sizeof(error_shader), nullptr, error_shader));
 
         std::string msg = std::string("compile_gl_shader(): unable to compile ") +
-                          type_str + " \"" + name + "\":\n\n" + error_shader;
+                          std::string(type_str) + " \"" + std::string(name) + "\":\n\n" + error_shader;
         throw std::runtime_error(msg);
     }
 
@@ -50,47 +53,52 @@ static GLuint compile_gl_shader(GLenum type,
 }
 
 Shader::Shader(RenderPass *render_pass,
-               const std::string &name,
-               const std::string &vertex_shader,
-               const std::string &fragment_shader,
+               std::string_view name,
+               std::string_view vertex_shader,
+               std::string_view fragment_shader,
                BlendMode blend_mode)
-    : m_render_pass(render_pass), m_name(name), m_blend_mode(blend_mode), m_shader_handle(0) {
+    : p(new Impl()) {
+
+    p->render_pass = render_pass;
+    p->name = name;
+    p->blend_mode = blend_mode;
+    p->shader_handle = 0;
 
     GLuint vertex_shader_handle   = compile_gl_shader(GL_VERTEX_SHADER,   name, vertex_shader),
            fragment_shader_handle = compile_gl_shader(GL_FRAGMENT_SHADER, name, fragment_shader);
 
-    m_shader_handle = glCreateProgram();
+    p->shader_handle = glCreateProgram();
 
     GLint status;
-    CHK(glAttachShader(m_shader_handle, vertex_shader_handle));
-    CHK(glAttachShader(m_shader_handle, fragment_shader_handle));
-    CHK(glLinkProgram(m_shader_handle));
+    CHK(glAttachShader(p->shader_handle, vertex_shader_handle));
+    CHK(glAttachShader(p->shader_handle, fragment_shader_handle));
+    CHK(glLinkProgram(p->shader_handle));
     CHK(glDeleteShader(vertex_shader_handle));
     CHK(glDeleteShader(fragment_shader_handle));
-    CHK(glGetProgramiv(m_shader_handle, GL_LINK_STATUS, &status));
+    CHK(glGetProgramiv(p->shader_handle, GL_LINK_STATUS, &status));
 
     if (status != GL_TRUE) {
         char error_shader[4096];
-        CHK(glGetProgramInfoLog(m_shader_handle, sizeof(error_shader), nullptr, error_shader));
-        m_shader_handle = 0;
-        throw std::runtime_error("Shader::Shader(name=\"" + name +
+        CHK(glGetProgramInfoLog(p->shader_handle, sizeof(error_shader), nullptr, error_shader));
+        p->shader_handle = 0;
+        throw std::runtime_error("Shader::Shader(name=\"" + std::string(name) +
                                  "\"): unable to link shader!\n\n" + error_shader);
     }
 
     GLint attribute_count, uniform_count;
-    CHK(glGetProgramiv(m_shader_handle, GL_ACTIVE_ATTRIBUTES, &attribute_count));
-    CHK(glGetProgramiv(m_shader_handle, GL_ACTIVE_UNIFORMS, &uniform_count));
+    CHK(glGetProgramiv(p->shader_handle, GL_ACTIVE_ATTRIBUTES, &attribute_count));
+    CHK(glGetProgramiv(p->shader_handle, GL_ACTIVE_UNIFORMS, &uniform_count));
 
-    auto register_buffer = [&](BufferType type, const std::string &name,
+    auto register_buffer = [&](BufferType type, std::string_view name,
                                int index, GLenum gl_type) {
-        if (m_buffers.find(name) != m_buffers.end())
+        if (p->buffers.find(name) != p->buffers.end())
             throw std::runtime_error(
                 "Shader::Shader(): duplicate attribute/uniform name in shader code!");
         else if (name == "indices")
             throw std::runtime_error(
                 "Shader::Shader(): argument name 'indices' is reserved!");
 
-        Buffer &buf = m_buffers[name];
+        Buffer &buf = p->buffers[std::string(name)];
         for (int i = 0; i < 3; ++i)
             buf.shape[i] = 1;
         buf.ndim = 1;
@@ -222,9 +230,9 @@ Shader::Shader(RenderPass *render_pass,
         char attr_name[128];
         GLenum type = 0;
         GLint size = 0;
-        CHK(glGetActiveAttrib(m_shader_handle, i, sizeof(attr_name), nullptr,
+        CHK(glGetActiveAttrib(p->shader_handle, i, sizeof(attr_name), nullptr,
                               &size, &type, attr_name));
-        GLint index = glGetAttribLocation(m_shader_handle, attr_name);
+        GLint index = glGetAttribLocation(p->shader_handle, attr_name);
         register_buffer(VertexBuffer, attr_name, index, type);
     }
 
@@ -232,13 +240,13 @@ Shader::Shader(RenderPass *render_pass,
         char uniform_name[128];
         GLenum type = 0;
         GLint size = 0;
-        CHK(glGetActiveUniform(m_shader_handle, i, sizeof(uniform_name), nullptr,
+        CHK(glGetActiveUniform(p->shader_handle, i, sizeof(uniform_name), nullptr,
                                &size, &type, uniform_name));
-        GLint index = glGetUniformLocation(m_shader_handle, uniform_name);
+        GLint index = glGetUniformLocation(p->shader_handle, uniform_name);
         register_buffer(UniformBuffer, uniform_name, index, type);
     }
 
-    Buffer &buf = m_buffers["indices"];
+    Buffer &buf = p->buffers["indices"];
     buf.index = -1;
     buf.ndim = 1;
     buf.shape[0] = 0;
@@ -247,30 +255,30 @@ Shader::Shader(RenderPass *render_pass,
     buf.dtype = VariableType::UInt32;
 
 #if defined(NANOGUI_USE_OPENGL)
-    CHK(glGenVertexArrays(1, &m_vertex_array_handle));
+    CHK(glGenVertexArrays(1, &p->vertex_array_handle));
 
-    m_uses_point_size = vertex_shader.find("gl_PointSize") != std::string::npos;
+    p->uses_point_size = vertex_shader.find("gl_PointSize") != std::string::npos;
 #endif
 }
 
 Shader::~Shader() {
-    CHK(glDeleteProgram(m_shader_handle));
+    CHK(glDeleteProgram(p->shader_handle));
 #if defined(NANOGUI_USE_OPENGL)
-    CHK(glDeleteVertexArrays(1, &m_vertex_array_handle));
+    CHK(glDeleteVertexArrays(1, &p->vertex_array_handle));
 #endif
+    delete p;
 }
 
-void Shader::set_buffer(const std::string &name,
+void Shader::set_buffer(std::string_view name,
                         VariableType dtype,
                         size_t ndim,
                         const size_t *shape,
                         const void *data) {
-    auto it = m_buffers.find(name);
-    if (it == m_buffers.end())
+    auto it = p->buffers.find(name);
+    if (it == p->buffers.end())
         throw std::runtime_error(
-            "Shader::set_buffer(): could not find argument named \"" + name + "\"");
-
-    Buffer &buf = m_buffers[name];
+            std::string("Shader::set_buffer(): could not find argument named \"") + std::string(name) + "\"");
+    Buffer &buf = it.value();
 
     bool mismatch = ndim != buf.ndim || dtype != buf.dtype;
     for (size_t i = (buf.type == UniformBuffer ? 0 : 1); i < ndim; ++i)
@@ -283,7 +291,7 @@ void Shader::set_buffer(const std::string &name,
         for (size_t i = 0; i < 3; ++i)
             arg.shape[i] = i < arg.ndim ? shape[i] : 1;
         arg.dtype = dtype;
-        throw std::runtime_error("Buffer::set_buffer(\"" + name +
+        throw std::runtime_error("Buffer::set_buffer(\"" + std::string(name) +
                                  "\"): shape/dtype mismatch: expected " + buf.to_string() +
                                  ", got " + arg.to_string());
     }
@@ -322,15 +330,15 @@ void Shader::set_buffer(const std::string &name,
     buf.dirty = true;
 }
 
-void Shader::set_texture(const std::string &name, Texture *texture) {
-    auto it = m_buffers.find(name);
-    if (it == m_buffers.end())
+void Shader::set_texture(std::string_view name, Texture *texture) {
+    auto it = p->buffers.find(name);
+    if (it == p->buffers.end())
         throw std::runtime_error(
-            "Shader::set_texture(): could not find argument named \"" + name + "\"");
-    Buffer &buf = m_buffers[name];
+            "Shader::set_texture(): could not find argument named \"" + std::string(name) + "\"");
+    Buffer &buf = it.value();
     if (!(buf.type == VertexTexture || buf.type == FragmentTexture))
         throw std::runtime_error(
-            "Shader::set_texture(): argument named \"" + name + "\" is not a texture!");
+            "Shader::set_texture(): argument named \"" + std::string(name) + "\" is not a texture!");
 
     buf.buffer = (void *) ((uintptr_t) texture->texture_handle());
     buf.dirty  = true;
@@ -339,20 +347,23 @@ void Shader::set_texture(const std::string &name, Texture *texture) {
 void Shader::begin() {
     int texture_unit = 0;
 
-    CHK(glUseProgram(m_shader_handle));
+    CHK(glUseProgram(p->shader_handle));
 
 #if defined(NANOGUI_USE_OPENGL)
-    CHK(glBindVertexArray(m_vertex_array_handle));
+    CHK(glBindVertexArray(p->vertex_array_handle));
 #endif
 
-    for (auto &[key, buf] : m_buffers) {
+    for (auto it = p->buffers.begin(); it != p->buffers.end(); ++it) {
+        const std::string &key = it->first;
+        Buffer &buf = it.value();
+
         bool indices = key == "indices";
         if (!buf.buffer) {
             if (!indices)
                 fprintf(stderr,
                         "Shader::begin(): shader \"%s\" has an unbound "
                         "argument \"%s\"!\n",
-                        m_name.c_str(), key.c_str());
+                        p->name.c_str(), key.c_str());
             continue;
         }
 
@@ -389,8 +400,8 @@ void Shader::begin() {
                 }
 
                 if (buf.ndim != 2)
-                    throw std::runtime_error("\"" + m_name + "\": vertex attribute \"" + key +
-                                             "\" has an invalid shapeension (expected ndim=2, got " +
+                    throw std::runtime_error("\"" + p->name + "\": vertex attribute \"" + key +
+                                             "\" has an invalid dimension (expected ndim=2, got " +
                                              std::to_string(buf.ndim) + ")");
 
                 CHK(glVertexAttribPointer(buf.index, (GLint) buf.shape[1],
@@ -408,7 +419,7 @@ void Shader::begin() {
 
             case UniformBuffer:
                 if (buf.ndim > 2)
-                    throw std::runtime_error("\"" + m_name + "\": uniform attribute \"" + key +
+                    throw std::runtime_error("\"" + p->name + "\": uniform attribute \"" + key +
                                              "\" has an invalid shapeension (expected ndim=0/1/2, got " +
                                              std::to_string(buf.ndim) + ")");
                 switch (buf.dtype) {
@@ -494,38 +505,38 @@ void Shader::begin() {
                 }
 
                 if (uniform_error)
-                    throw std::runtime_error("\"" + m_name + "\": uniform attribute \"" + key +
+                    throw std::runtime_error("\"" + p->name + "\": uniform attribute \"" + key +
                                              "\" has an unsupported dtype/shape configuration: " + buf.to_string());
                 break;
 
             default:
-                throw std::runtime_error("\"" + m_name + "\": uniform attribute \"" + key +
+                throw std::runtime_error("\"" + p->name + "\": uniform attribute \"" + key +
                                          "\" has an unsupported dtype/shape configuration:" + buf.to_string());
         }
 
         buf.dirty = false;
     }
 
-    if (m_blend_mode == BlendMode::AlphaBlend) {
+    if (p->blend_mode == BlendMode::AlphaBlend) {
         CHK(glEnable(GL_BLEND));
         CHK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     }
 
 #if defined(NANOGUI_USE_OPENGL)
-    if (m_uses_point_size)
+    if (p->uses_point_size)
         CHK(glEnable(GL_PROGRAM_POINT_SIZE));
 #endif
 }
 
 void Shader::end() {
-    if (m_blend_mode == BlendMode::AlphaBlend)
+    if (p->blend_mode == BlendMode::AlphaBlend)
         CHK(glDisable(GL_BLEND));
 #if defined(NANOGUI_USE_OPENGL)
-    if (m_uses_point_size)
+    if (p->uses_point_size)
         CHK(glDisable(GL_PROGRAM_POINT_SIZE));
     CHK(glBindVertexArray(0));
 #else
-    for (const auto &[key, buf] : m_buffers) {
+    for (const auto &[key, buf] : p->buffers) {
         if (buf.type != VertexBuffer)
             continue;
         CHK(glDisableVertexAttribArray(buf.index));

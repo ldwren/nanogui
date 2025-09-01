@@ -24,7 +24,7 @@ NAMESPACE_BEGIN(nanogui)
 class ToolButton : public Button {
 public:
     ToolButton(Widget *parent, int icon,
-           const std::string &caption = "")
+           std::string_view caption = "")
         : Button(parent, caption, icon) {
         set_flags(Flags::RadioButton | Flags::ToggleButton);
         set_fixed_size(Vector2i(25, 25));
