@@ -8,8 +8,8 @@
     path = ext/glfw
     url = https://github.com/wjakob/glfw
 [submodule "ext/nanobind"]
-	path = ext/nanobind
-	url = https://github.com/wjakob/nanobind
+    path = ext/nanobind
+    url = https://github.com/wjakob/nanobind
 [submodule "ext/nativefiledialog-extended"]
-	path = ext/nativefiledialog-extended
-	url = https://github.com/btzy/nativefiledialog-extended
+    path = ext/nativefiledialog-extended
+    url = https://github.com/mitsuba-renderer/nativefiledialog-extended
