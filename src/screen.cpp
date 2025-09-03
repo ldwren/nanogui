@@ -435,22 +435,6 @@ Screen::Screen(const Vector2i &size, std::string_view caption, bool resizable,
     );
 
     initialize(m_glfw_window, true);
-
-#if defined(NANOGUI_USE_METAL)
-    if (depth_buffer) {
-        m_depth_stencil_texture = new Texture(
-            stencil_buffer ? Texture::PixelFormat::DepthStencil
-                           : Texture::PixelFormat::Depth,
-            Texture::ComponentFormat::Float32,
-            framebuffer_size(),
-            Texture::InterpolationMode::Bilinear,
-            Texture::InterpolationMode::Bilinear,
-            Texture::WrapMode::ClampToEdge,
-            1,
-            Texture::TextureFlags::RenderTarget
-        );
-    }
-#endif
 }
 
 void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
@@ -530,10 +514,24 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
     for (size_t i = 0; i < (size_t) Cursor::CursorCount; ++i)
         m_cursors[i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR + (int) i);
 
+    if (m_stencil_buffer || m_depth_buffer) {
+        m_depth_stencil_texture = new Texture(
+            m_stencil_buffer ? Texture::PixelFormat::DepthStencil
+                             : Texture::PixelFormat::Depth,
+            Texture::ComponentFormat::UInt32,
+            m_fbsize,
+            Texture::InterpolationMode::Nearest,
+            Texture::InterpolationMode::Nearest,
+            Texture::WrapMode::ClampToEdge,
+            1,
+            Texture::TextureFlags::RenderTarget
+        );
+    }
+
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
     // Initialize color management resources if needed
     if (m_wants_color_management) {
-        m_cm_texture = new Texture(
+        m_color_texture = new Texture(
             pixel_format(),
             Texture::ComponentFormat::Float32,
             m_fbsize,
@@ -544,29 +542,16 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
             Texture::TextureFlags::ShaderRead | Texture::TextureFlags::RenderTarget
         );
 
-        if (m_stencil_buffer || m_depth_buffer) {
-            m_cm_depth_texture = new Texture(
-                m_stencil_buffer ? Texture::PixelFormat::DepthStencil : Texture::PixelFormat::Depth,
-                Texture::ComponentFormat::UInt32,
-                m_fbsize,
-                Texture::InterpolationMode::Nearest,
-                Texture::InterpolationMode::Nearest,
-                Texture::WrapMode::ClampToEdge,
-                1,
-                Texture::TextureFlags::RenderTarget
-            );
-        }
-
-        m_cm_render_pass = new RenderPass(
-            {m_cm_texture},
-            m_depth_buffer ? m_cm_depth_texture : nullptr,
-            m_stencil_buffer ? m_cm_depth_texture : nullptr,
+        m_color_pass = new RenderPass(
+            {m_color_texture},
+            m_depth_buffer ? m_depth_stencil_texture : nullptr,
+            m_stencil_buffer ? m_depth_stencil_texture : nullptr,
             nullptr,
             true
         );
 
         // Disable depth testing. We've only got a depth buffer in order to have a stencil buffer.
-        m_cm_render_pass->set_depth_test(RenderPass::DepthTest::Always, true);
+        m_color_pass->set_depth_test(RenderPass::DepthTest::Always, true);
 
         m_dither_matrix = new Texture{
             Texture::PixelFormat::R,
@@ -578,7 +563,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
         };
 
         const float dither_scale = has_float_buffer() ? 0.0f : (1.0f / (1u << bits_per_sample()));
-        auto dither_matrix = nanogui::ditherMatrix(dither_scale);
+        auto dither_matrix = nanogui::dither_matrix(dither_scale);
         m_dither_matrix->upload((uint8_t*)dither_matrix.data());
 
 #    if defined(NANOGUI_USE_OPENGL)
@@ -587,7 +572,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
         std::string preamble = "#version 100\nprecision highp float; precision highp sampler2D;\n";
 #    endif
         auto vertex_shader = preamble + R"glsl(
-            uniform vec2 ditherScale;
+            uniform vec2 dither_scale;
 
             attribute vec2 position;
             varying vec2 imageUv;
@@ -596,7 +581,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
             void main() {
                 vec2 pos = position * 0.5 + 0.5; // Convert from [-1, 1] to [0, 1]
                 imageUv = pos;
-                ditherUv = pos * ditherScale;
+                ditherUv = pos * dither_scale;
 
                 gl_Position = vec4(position, 1.0, 1.0);
             }
@@ -605,15 +590,15 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
             varying vec2 imageUv;
             varying vec2 ditherUv;
 
-            uniform sampler2D framebufferTexture;
-            uniform sampler2D ditherMatrix;
+            uniform sampler2D framebuffer_texture;
+            uniform sampler2D dither_matrix;
 
-            uniform float displaySdrWhiteLevel;
-            uniform float minLuminance;
-            uniform float maxLuminance;
+            uniform float display_sdr_white_level;
+            uniform float min_luminance;
+            uniform float max_luminance;
 
-            uniform int outTransferFunction;
-            uniform mat3 displayColorMatrix;
+            uniform int out_transfer_function;
+            uniform mat3 display_color_matrix;
             uniform bool clipToUnitInterval;
 
             #define CM_TRANSFER_FUNCTION_BT1886     1
@@ -846,26 +831,26 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
             }
 
             vec3 dither(vec3 color) {
-                return color + texture2D(ditherMatrix, fract(ditherUv)).r;
+                return color + texture2D(dither_matrix, fract(ditherUv)).r;
             }
 
             void main() {
-                vec4 color = texture2D(framebufferTexture, imageUv);
+                vec4 color = texture2D(framebuffer_texture, imageUv);
 
                 // nanogui uses colors in extended sRGB with a scale that assumes SDR white corresponds to a value of 1. Hence, to convert to
                 // absolute nits in the display's color space, we need to undo the extended sRGB transfer function, multiply by the SDR white
                 // level of the display, apply the display's color matrix, and finally apply the display's transfer function.
-                vec3 nits = displayColorMatrix * (displaySdrWhiteLevel * toLinearRGB(color.rgb, CM_TRANSFER_FUNCTION_EXT_SRGB));
+                vec3 nits = display_color_matrix * (display_sdr_white_level * toLinearRGB(color.rgb, CM_TRANSFER_FUNCTION_EXT_SRGB));
 
                 // Some displays perform strange tonemapping when provided with values outside of their luminance range. Make sure we don't
                 // let this happen -- we strongly prefer hard clipping because we want the displayable colors to be preserved.
-                if (maxLuminance > 0.0) {
-                    nits = clamp(nits, vec3(minLuminance), vec3(maxLuminance));
+                if (max_luminance > 0.0) {
+                    nits = clamp(nits, vec3(min_luminance), vec3(max_luminance));
                 }
 
                 // On Linux, some drivers only let us have an 8-bit framebuffer. When dealing with HDR content in such a situation,
                 // dithering is essential to avoid banding artifacts.
-                color.rgb = dither(fromLinearRGB(nits / transferWhiteLevel(outTransferFunction), outTransferFunction));
+                color.rgb = dither(fromLinearRGB(nits / transferWhiteLevel(out_transfer_function), out_transfer_function));
 
                 if (clipToUnitInterval) {
                     color = clamp(color, vec4(0.0), vec4(1.0));
@@ -876,15 +861,15 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
         )glsl";
 
         try {
-            m_cm_shader = new Shader(nullptr, "color_management", vertex_shader, fragment_shader);
+            m_color_shader = new Shader(nullptr, "color_management", vertex_shader, fragment_shader);
         } catch (const std::runtime_error& e) { fprintf(stderr, "Error creating color management shader: %s\n", e.what()); }
 
         uint32_t indices[3 * 2] = {0, 1, 2, 2, 3, 0};
         float positions[2 * 4] = {-1.f, -1.f, 1.f, -1.f, 1.f, 1.f, -1.f, 1.f};
 
-        m_cm_shader->set_buffer("indices", VariableType::UInt32, {3 * 2}, indices);
-        m_cm_shader->set_buffer("position", VariableType::Float32, {4, 2}, positions);
-        m_cm_shader->set_texture("ditherMatrix", m_dither_matrix);
+        m_color_shader->set_buffer("indices", VariableType::UInt32, {3 * 2}, indices);
+        m_color_shader->set_buffer("position", VariableType::Float32, {4, 2}, positions);
+        m_color_shader->set_texture("dither_matrix", m_dither_matrix);
     }
 #endif
 
@@ -1005,9 +990,9 @@ void Screen::draw_setup() {
     glfwMakeContextCurrent(m_glfw_window);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer_handle());
 
-    if (m_cm_render_pass && m_cm_shader) {
-        m_cm_render_pass->begin();
-    }
+    if (m_color_pass && m_color_shader)
+        m_color_pass->begin();
+
 #elif defined(NANOGUI_USE_METAL)
     void *nswin = glfwGetCocoaWindow(m_glfw_window);
     metal_window_set_size(nswin, m_fbsize);
@@ -1064,38 +1049,38 @@ void Screen::draw_setup() {
 
 void Screen::draw_teardown() {
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-    if (m_cm_render_pass && m_cm_shader) {
-        m_cm_render_pass->end();
+    if (m_color_pass && m_color_shader) {
+        m_color_pass->end();
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glViewport(0, 0, m_fbsize[0], m_fbsize[1]);
         CHK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
-        m_cm_shader->set_texture("framebufferTexture", m_cm_texture);
+        m_color_shader->set_texture("framebuffer_texture", m_color_texture);
 
         float display_sdr_white_level =
             m_display_sdr_white_level_override ?
             m_display_sdr_white_level_override.value() :
             glfwGetWindowSdrWhiteLevel(m_glfw_window);
 
-        m_cm_shader->set_uniform("displaySdrWhiteLevel", display_sdr_white_level);
-        m_cm_shader->set_uniform("outTransferFunction", (int)glfwGetWindowTransfer(m_glfw_window));
+        m_color_shader->set_uniform("display_sdr_white_level", display_sdr_white_level);
+        m_color_shader->set_uniform("out_transfer_function", (int)glfwGetWindowTransfer(m_glfw_window));
 
         const auto display_chroma = chroma_from_wp_primaries(glfwGetWindowPrimaries(m_glfw_window));
         const auto display_color_matrix = inverse(chroma_to_rec709_matrix(display_chroma));
-        m_cm_shader->set_uniform("displayColorMatrix", display_color_matrix);
+        m_color_shader->set_uniform("display_color_matrix", display_color_matrix);
 
-        m_cm_shader->set_uniform("minLuminance", glfwGetWindowMinLuminance(m_glfw_window));
-        m_cm_shader->set_uniform("maxLuminance", glfwGetWindowMaxLuminance(m_glfw_window));
+        m_color_shader->set_uniform("min_luminance", glfwGetWindowMinLuminance(m_glfw_window));
+        m_color_shader->set_uniform("max_luminance", glfwGetWindowMaxLuminance(m_glfw_window));
 
-        m_cm_shader->set_uniform("clipToUnitInterval", !m_float_buffer);
+        m_color_shader->set_uniform("clipToUnitInterval", !m_float_buffer);
 
-        m_cm_shader->set_uniform("ditherScale", (1.0f / DITHER_MATRIX_SIZE) * Vector2f(m_fbsize[0], m_fbsize[1]));
-        m_cm_shader->set_texture("ditherMatrix", m_dither_matrix);
+        m_color_shader->set_uniform("dither_scale", (1.0f / DITHER_MATRIX_SIZE) * Vector2f(m_fbsize[0], m_fbsize[1]));
+        m_color_shader->set_texture("dither_matrix", m_dither_matrix);
 
-        m_cm_shader->begin();
-        m_cm_shader->draw_array(Shader::PrimitiveType::Triangle, 0, 6, true);
-        m_cm_shader->end();
+        m_color_shader->begin();
+        m_color_shader->draw_array(Shader::PrimitiveType::Triangle, 0, 6, true);
+        m_color_shader->end();
     }
 
     glfwSwapBuffers(m_glfw_window);
@@ -1407,23 +1392,15 @@ void Screen::resize_callback_event(int, int) {
 
     m_last_interaction = glfwGetTime();
 
-#if defined(NANOGUI_USE_METAL)
     if (m_depth_stencil_texture)
         m_depth_stencil_texture->resize(fb_size);
-#endif
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-    if (m_cm_texture) {
-        m_cm_texture->resize(fb_size);
-    }
+    if (m_color_texture)
+        m_color_texture->resize(fb_size);
 
-    if (m_cm_depth_texture) {
-        m_cm_depth_texture->resize(fb_size);
-    }
-
-    if (m_cm_render_pass) {
-        m_cm_render_pass->resize(fb_size);
-    }
+    if (m_color_pass)
+        m_color_pass->resize(fb_size);
 #endif
 
     try {
@@ -1514,7 +1491,7 @@ bool Screen::tooltip_fade_in_progress() const {
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
 uint32_t Screen::framebuffer_handle() const {
-    return applies_color_management() ? m_cm_render_pass->framebuffer_handle() : 0;
+    return applies_color_management() ? m_color_pass->framebuffer_handle() : 0;
 }
 #endif
 

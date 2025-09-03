@@ -471,7 +471,7 @@ void object_init_py(void (*object_inc_ref_py_)(PyObject *) noexcept,
     object_dec_ref_py = object_dec_ref_py_;
 }
 
-dither_matrix_t ditherMatrix(float scale) {
+dither_matrix_t dither_matrix(float scale) {
     // 8x8 Bayer dithering matrix scaled to [-0.5f, 0.5f] / 255
     dither_matrix_t thresholdMatrix = {
         {0, 32, 8, 40, 2, 34, 10, 42,

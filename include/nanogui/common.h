@@ -356,7 +356,7 @@ extern NANOGUI_EXPORT int __nanogui_get_image(NVGcontext *ctx, std::string_view 
 
 static const size_t DITHER_MATRIX_SIZE = 8;
 using dither_matrix_t = std::array<float, DITHER_MATRIX_SIZE * DITHER_MATRIX_SIZE>;
-dither_matrix_t ditherMatrix(float scale);
+dither_matrix_t dither_matrix(float scale);
 
 NAMESPACE_END(nanogui)
 

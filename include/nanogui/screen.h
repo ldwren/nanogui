@@ -221,7 +221,7 @@ public:
     bool has_float_buffer() const { return m_float_buffer; }
 
     /// Does the screen apply color management as a post processing shader?
-    bool applies_color_management() const { return m_wants_color_management && m_cm_render_pass && m_cm_shader && m_cm_texture; }
+    bool applies_color_management() const { return m_wants_color_management && m_color_pass && m_color_shader && m_color_texture; }
 
     /// How many bits per sample does the framebuffer use?
     uint32_t bits_per_sample() const { return m_bits_per_sample; }
@@ -325,15 +325,14 @@ protected:
     bool m_redraw;
     std::function<void(Vector2i)> m_resize_callback;
     RunMode m_last_run_mode;
-    ref<RenderPass> m_cm_render_pass;
-    ref<Texture> m_cm_texture;
-    ref<Texture> m_cm_depth_texture;
-    ref<Shader> m_cm_shader;
+    ref<RenderPass> m_color_pass;
+    ref<Texture> m_color_texture;
+    ref<Texture> m_depth_stencil_texture;
+    ref<Shader> m_color_shader;
     ref<Texture> m_dither_matrix;
 #if defined(NANOGUI_USE_METAL)
     void *m_metal_texture = nullptr;
     void *m_metal_drawable = nullptr;
-    ref<Texture> m_depth_stencil_texture;
 #endif
 };
 
