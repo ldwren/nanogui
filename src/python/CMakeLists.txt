@@ -86,10 +86,42 @@ endif()
 nanobind_add_stub(
   nanobind-python-stub
   MODULE nanogui
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../../nanogui/__init__.pyi
-  PYTHON_PATH $<TARGET_FILE_DIR:nanogui-python>/..
-  DEPENDS nanogui-python ${CMAKE_CURRENT_BINARY_DIR}/../../nanogui/__init__.py
+  PYTHON_PATH ${NANOGUI_OUTPUT_DIRECTORY}/..
+  RECURSIVE
+
+  OUTPUT
+    ${NANOGUI_OUTPUT_DIRECTORY}/__init__.pyi
+    ${NANOGUI_OUTPUT_DIRECTORY}/glfw.pyi
+    ${NANOGUI_OUTPUT_DIRECTORY}/icons.pyi
+    ${NANOGUI_OUTPUT_DIRECTORY}/ituth273.pyi
+    ${NANOGUI_OUTPUT_DIRECTORY}/nanovg.pyi
+
+  DEPENDS
+    nanogui-python
+    ${NANOGUI_OUTPUT_DIRECTORY}/__init__.py
+
+  MARKER_FILE
+    ${NANOGUI_OUTPUT_DIRECTORY}/py.typed
+
+  OUTPUT_PATH
+    ${NANOGUI_OUTPUT_DIRECTORY}
 )
+
+if (NANOGUI_INSTALL)
+  install(
+    FILES
+      ${NANOGUI_OUTPUT_DIRECTORY}/__init__.py
+      ${NANOGUI_OUTPUT_DIRECTORY}/__init__.pyi
+      ${NANOGUI_OUTPUT_DIRECTORY}/glfw.pyi
+      ${NANOGUI_OUTPUT_DIRECTORY}/icons.pyi
+      ${NANOGUI_OUTPUT_DIRECTORY}/ituth273.pyi
+      ${NANOGUI_OUTPUT_DIRECTORY}/nanovg.pyi
+      ${NANOGUI_OUTPUT_DIRECTORY}/py.typed
+
+    DESTINATION
+      ${CMAKE_INSTALL_LIBDIR}
+  )
+endif()
 
 mark_as_advanced(
   NB_CREATE_INSTALL_RULES

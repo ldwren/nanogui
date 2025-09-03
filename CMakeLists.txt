@@ -532,7 +532,7 @@ if (MSVC)
   target_compile_options(nanogui PRIVATE /wd4324)
 endif()
 
-target_link_libraries(nanogui PRIVATE nfd)
+target_link_libraries(nanogui PRIVATE $<BUILD_INTERFACE:nfd>)
 
 # Auto-detect GLES include directory on Raspberry PI
 if (EXISTS /opt/vc/include)
@@ -563,7 +563,7 @@ if (NANOGUI_INSTALL)
             FILES_MATCHING PATTERN "*.h")
   endif()
 
-  install(TARGETS nanogui nfd EXPORT nanoguiTargets)
+  install(TARGETS nanogui EXPORT nanoguiTargets)
 
   set(NANOGUI_CMAKECONFIG_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/cmake/nanogui")
 
