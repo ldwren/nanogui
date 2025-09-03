@@ -34,7 +34,7 @@ static const int num_primaries = sizeof(primary_table) / sizeof(primary_table[0]
 class HDRGamutTest : public Screen {
 public:
     HDRGamutTest() : Screen(Vector2i(800, 600), "NanoGUI test", /* resizable */ true, /* maximized */ false,
-                            /* fullscreen */ false, /* depth_buffer */ true, /* stencil_buffer */ false,
+                            /* fullscreen */ false, /* depth_buffer */ true, /* stencil_buffer */ true,
                             /* float_buffer */ true, /* gl_major */ 3, /* gl_minor */ 2) {
         inc_ref();
 

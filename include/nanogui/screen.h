@@ -16,8 +16,7 @@
 
 #include <nanogui/widget.h>
 #include <nanogui/texture.h>
-
-#include <optional>
+#include <nanogui/colorpass.h>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -221,7 +220,13 @@ public:
     bool has_float_buffer() const { return m_float_buffer; }
 
     /// Does the screen apply color management as a post processing shader?
-    bool applies_color_management() const { return m_wants_color_management && m_color_pass && m_color_shader && m_color_texture; }
+    bool applies_color_management() const {
+#if defined(NANOGUI_USE_METAL)
+        return false;
+#else
+        return m_color_pass;
+#endif
+    }
 
     /// How many bits per sample does the framebuffer use?
     uint32_t bits_per_sample() const { return m_bits_per_sample; }
@@ -321,18 +326,17 @@ protected:
     bool m_float_buffer;
     uint32_t m_bits_per_sample;
     bool m_wants_color_management = false;
-    std::optional<float> m_display_sdr_white_level_override = std::nullopt;
+    float m_display_sdr_white_level_override = 0.0f;
     bool m_redraw;
     std::function<void(Vector2i)> m_resize_callback;
     RunMode m_last_run_mode;
-    ref<RenderPass> m_color_pass;
     ref<Texture> m_color_texture;
     ref<Texture> m_depth_stencil_texture;
-    ref<Shader> m_color_shader;
-    ref<Texture> m_dither_matrix;
 #if defined(NANOGUI_USE_METAL)
     void *m_metal_texture = nullptr;
     void *m_metal_drawable = nullptr;
+#else
+    ref<ColorPass> m_color_pass;
 #endif
 };
 

@@ -429,6 +429,7 @@ add_library(nanogui ${NANOGUI_LIBRARY_TYPE}
   include/nanogui/quad.h src/quad.cpp
   include/nanogui/imageview.h src/imageview.cpp
   include/nanogui/traits.h src/traits.cpp
+  include/nanogui/colorpass.h src/colorpass.cpp
   include/nanogui/renderpass.h
   include/nanogui/formhelper.h
   include/nanogui/icons.h
