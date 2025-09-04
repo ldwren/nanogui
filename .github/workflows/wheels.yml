@@ -18,6 +18,9 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
+    env:
+      CIBW_ARCHS_MACOS: ${{ matrix.os == 'macos-14' && 'arm64' || matrix.os == 'macos-13' && 'x86_64' || '' }}
+
     steps:
       # Checkout with retry mechanism for reliability
       - uses: Wandalen/wretry.action@v3.8.0

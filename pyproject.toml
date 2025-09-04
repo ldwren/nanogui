@@ -77,11 +77,11 @@ test-command = "python -c \"import nanogui\""
 archs = ["auto64"]
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
-before-build = "yum install -y mesa-libGLU-devel libXi-devel libXcursor-devel libXinerama-devel libXrandr-devel xorg-x11-server-devel libxkbcommon-devel wayland-devel dbus-devel"
+before-build = "yum install -y mesa-libGLU-devel libXi-devel libXcursor-devel libXinerama-devel libXrandr-devel xorg-x11-server-devel libxkbcommon-devel wayland-devel dbus-devel kernel-headers"
+environment = { CFLAGS="-D_GNU_SOURCE", CXXFLAGS="-D_GNU_SOURCE" }
 
 [tool.cibuildwheel.windows]
 archs = ["auto64"]
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
