@@ -330,12 +330,13 @@ protected:
     bool m_redraw;
     std::function<void(Vector2i)> m_resize_callback;
     RunMode m_last_run_mode;
-    ref<Texture> m_color_texture;
     ref<Texture> m_depth_stencil_texture;
 #if defined(NANOGUI_USE_METAL)
     void *m_metal_texture = nullptr;
     void *m_metal_drawable = nullptr;
+    void *m_nswin = nullptr;
 #else
+    ref<Texture> m_color_texture;
     ref<ColorPass> m_color_pass;
 #endif
 };

@@ -489,9 +489,9 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 #elif defined(NANOGUI_USE_GLES)
     m_nvg_context = nvgCreateGLES2(flags);
 #elif defined(NANOGUI_USE_METAL)
-    void *nswin = glfwGetCocoaWindow(window);
-    metal_window_init(nswin, m_float_buffer);
-    metal_window_set_size(nswin, m_fbsize);
+    m_nswin = glfwGetCocoaWindow(window);
+    metal_window_init(m_nswin, m_float_buffer);
+    metal_window_set_size(m_nswin, m_fbsize);
     m_nvg_context = nvgCreateMTL(metal_layer(),
                                  metal_command_queue(),
                                  flags | NVG_DOUBLE_BUFFER);
@@ -575,6 +575,7 @@ Screen::~Screen() {
 #elif defined(NANOGUI_USE_GLES)
         nvgDeleteGLES2(m_nvg_context);
 #elif defined(NANOGUI_USE_METAL)
+        metal_sync();
         nvgDeleteMTL(m_nvg_context);
 #endif
     }
@@ -671,10 +672,8 @@ void Screen::draw_setup() {
         m_color_pass->begin();
 
 #elif defined(NANOGUI_USE_METAL)
-    void *nswin = glfwGetCocoaWindow(m_glfw_window);
-    metal_window_set_size(nswin, m_fbsize);
-    m_metal_drawable = metal_window_next_drawable(nswin);
-    m_metal_texture = metal_drawable_texture(m_metal_drawable);
+    metal_window_set_size(m_nswin, m_fbsize);
+    metal_window_next_drawable(m_nswin, &m_metal_drawable, &m_metal_texture);
     mnvgSetColorTexture(m_nvg_context, m_metal_texture);
 #endif
 
@@ -698,11 +697,10 @@ void Screen::draw_setup() {
         glfwSwapInterval(interval);
 #else
         bool vsync = run_mode == RunMode::VSync;
-        metal_window_set_vsync(nswin, vsync);
+        metal_window_set_vsync(m_nswin, vsync);
 #endif
         m_last_run_mode = run_mode;
     }
-
 
 #if defined(_WIN32) || defined(__linux__) || defined(EMSCRIPTEN)
     if (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND) {
@@ -714,7 +712,7 @@ void Screen::draw_setup() {
     if (m_size[0])
         m_pixel_ratio = (float) m_fbsize[0] / (float) m_size[0];
 #if defined(NANOGUI_USE_METAL)
-    metal_window_set_content_scale(nswin, m_pixel_ratio);
+    metal_window_set_content_scale(m_nswin, m_pixel_ratio);
 #endif
 #endif
 
@@ -740,8 +738,7 @@ void Screen::draw_teardown() {
 #elif defined(NANOGUI_USE_METAL)
     mnvgSetColorTexture(m_nvg_context, nullptr);
     metal_present_and_release_drawable(m_metal_drawable);
-    m_metal_texture = nullptr;
-    m_metal_drawable = nullptr;
+    m_metal_drawable = m_metal_texture = nullptr;
 #endif
 }
 
@@ -1165,7 +1162,7 @@ Texture::ComponentFormat Screen::component_format() const {
 
 #if defined(NANOGUI_USE_METAL)
 void *Screen::metal_layer() const {
-    return metal_window_layer(glfwGetCocoaWindow(m_glfw_window));
+    return metal_window_layer(m_nswin);
 }
 #endif
 

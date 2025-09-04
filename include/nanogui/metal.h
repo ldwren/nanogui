@@ -31,6 +31,9 @@ extern NANOGUI_EXPORT void *metal_device();
 /// Return a pointer to the underlying Metal command queue (id<MTLCommandQueue>)
 extern NANOGUI_EXPORT void *metal_command_queue();
 
+/// Wait for pending work to finish
+extern void metal_sync();
+
 /// Return a pointer to the underlying Metal command queue (CAMetalLayer *)
 extern NANOGUI_EXPORT void *metal_layer(void *nswin);
 
@@ -49,11 +52,8 @@ extern NANOGUI_EXPORT void metal_window_set_vsync(void *nswin, bool vsync);
 /// Return the CAMetalLayer associated with a given NSWindow
 extern NANOGUI_EXPORT void *metal_window_layer(void *nswin);
 
-/// Acquire the next id<MTLDrawable> from the Metal layer
-extern NANOGUI_EXPORT void* metal_window_next_drawable(void *nswin);
-
-/// Return the id<MTLTexture> associated with an id<MTLDrawable>
-extern NANOGUI_EXPORT void *metal_drawable_texture(void *drawable);
+/// Acquire the next id<MTLDrawable> and underlying texture from the Metal layer
+extern NANOGUI_EXPORT void metal_window_next_drawable(void *nswin, void **drawable, void **texture);
 
 /// Release a drawable back to the pool
 extern NANOGUI_EXPORT void metal_present_and_release_drawable(void *drawable);

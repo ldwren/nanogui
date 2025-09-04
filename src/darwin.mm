@@ -48,12 +48,19 @@ void metal_init() {
 }
 
 void metal_shutdown() {
-    (void) (__bridge_transfer id<MTLDevice>) s_metal_command_queue;
-    (void) (__bridge_transfer id<MTLCommandQueue>) s_metal_device;
+    (void) (__bridge_transfer id<MTLDevice>) s_metal_device;
+    (void) (__bridge_transfer id<MTLCommandQueue>) s_metal_command_queue;
 }
 
 void* metal_device() { return s_metal_device; }
 void* metal_command_queue() { return s_metal_command_queue; }
+
+void metal_sync() {
+    id<MTLCommandQueue> command_queue = (__bridge id<MTLCommandQueue>) s_metal_command_queue;
+    id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
+    [command_buffer commit];
+    [command_buffer waitUntilCompleted];
+}
 
 void metal_window_init(void *nswin_, bool float_buffer) {
     CAMetalLayer *layer = [CAMetalLayer layer];
@@ -140,21 +147,20 @@ void* metal_window_layer(void *nswin_) {
     return (__bridge void *) nswin.contentView.layer;
 }
 
-void* metal_window_next_drawable(void *nswin_) {
+void metal_window_next_drawable(void *nswin_, void **drawable_, void **texture_) {
     NSWindow *nswin = (__bridge NSWindow *) nswin_;
     CAMetalLayer *layer = (CAMetalLayer *) nswin.contentView.layer;
-    id<MTLDrawable> drawable = layer.nextDrawable;
-    return (__bridge_retained void *) drawable;
-}
-
-void *metal_drawable_texture(void *drawable_) {
-    id<CAMetalDrawable> drawable = (__bridge id<CAMetalDrawable>) drawable_;
-    return (__bridge void *) drawable.texture;
+    id<CAMetalDrawable> drawable = layer.nextDrawable;
+    *texture_ = (__bridge void *) drawable.texture;
+    *drawable_ = (__bridge_retained void *) drawable;
 }
 
 void metal_present_and_release_drawable(void *drawable_) {
     id<CAMetalDrawable> drawable = (__bridge_transfer id<CAMetalDrawable>) drawable_;
-    [drawable present];
+    id<MTLCommandQueue> command_queue = (__bridge id<MTLCommandQueue>) s_metal_command_queue;
+    id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
+    [command_buffer presentDrawable: drawable];
+    [command_buffer commit];
 }
 
 #endif
