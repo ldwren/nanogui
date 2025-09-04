@@ -699,7 +699,6 @@ void Screen::draw_setup() {
 #else
         bool vsync = run_mode == RunMode::VSync;
         metal_window_set_vsync(nswin, vsync);
-        mnvgSetFlushWait(m_nvg_context, !vsync);
 #endif
         m_last_run_mode = run_mode;
     }
