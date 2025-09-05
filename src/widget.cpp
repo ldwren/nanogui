@@ -254,9 +254,26 @@ void Widget::draw(NVGcontext *ctx) {
         return;
 
     nvgTranslate(ctx, m_pos.x(), m_pos.y());
+
+    float scissor[4];
+    bool has_scissor = nvgCurrentScissor(ctx, scissor) == 1;
+
     for (auto child : m_children) {
         if (!child->visible())
             continue;
+
+        // Skip if child is outside the scissor rectangle
+        if (has_scissor) {
+            Vector2i scissor_min((int) scissor[0], (int) scissor[1]),
+                     scissor_max = scissor_min + Vector2i((int) scissor[2], (int) scissor[3]),
+                     child_min = child->m_pos,
+                     child_max = child_min + child->m_size;
+
+            if (child_min.x() >= scissor_max.x() || child_min.y() >= scissor_max.y() ||
+                child_max.x() <= scissor_min.x() || child_max.y() <= scissor_min.y())
+                continue;
+        }
+
         #if !defined(NANOGUI_SHOW_WIDGET_BOUNDS)
             nvgSave(ctx);
             nvgIntersectScissor(ctx, child->m_pos.x(), child->m_pos.y(),
@@ -269,6 +286,7 @@ void Widget::draw(NVGcontext *ctx) {
             nvgRestore(ctx);
         #endif
     }
+
     nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
 }
 
