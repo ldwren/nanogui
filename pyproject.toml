@@ -68,15 +68,15 @@ result = "{major}.{minor}.{patch}"
 
 [tool.cibuildwheel]
 build-verbosity = 1
-build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
+build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*"]
 skip = "*-musllinux* pp*"
 test-command = "python -c \"import nanogui\""
 
 # Platform-specific settings
 [tool.cibuildwheel.linux]
 archs = ["auto64"]
-manylinux-x86_64-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
 before-build = "yum install -y mesa-libGLU-devel libXi-devel libXcursor-devel libXinerama-devel libXrandr-devel xorg-x11-server-devel libxkbcommon-devel wayland-devel dbus-devel kernel-headers"
 environment = { CFLAGS="-D_GNU_SOURCE", CXXFLAGS="-D_GNU_SOURCE" }
 
