@@ -52,6 +52,7 @@ void Widget::set_theme(Theme *theme) {
     if (m_theme.get() == theme)
         return;
     m_theme = theme;
+    preferred_size_changed();
     for (auto child : m_children)
         child->set_theme(theme);
 }
@@ -61,6 +62,32 @@ int Widget::font_size() const {
 }
 
 Vector2i Widget::preferred_size(NVGcontext *ctx) const {
+    Vector2i result;
+    if (!m_children.empty()) {
+        result = preferred_size_impl(ctx);
+    } else {
+        result = m_preferred_size_cache;
+        if (result == Vector2i(-1)) {
+            result = preferred_size_impl(ctx);
+            m_preferred_size_cache = result;
+        } else {
+#if !defined(NDEBUG)
+            Vector2i ref = preferred_size_impl(ctx);
+            if (ref != result) {
+                fprintf(stderr,
+                        "NanoGUI: widget %p of type %s returned an unexpected preferred "
+                        "size. It appears that something updated its state but did not call "
+                        "preferred_size_changed() (size=[%i, %i], ref=[%i, %i]!\n",
+                        this, typeid(*this).name(), result.x(), result.y(), ref.x(), ref.y());
+                abort();
+            }
+#endif
+        }
+    }
+    return result;
+}
+
+Vector2i Widget::preferred_size_impl(NVGcontext *ctx) const {
     if (m_layout)
         return m_layout->preferred_size(ctx, this);
     else
