@@ -111,7 +111,7 @@ Vector2i TabWidgetBase::preferred_size_impl(NVGcontext* ctx) const {
     }
 
     return Vector2i(width + 1,
-                    font_size() + 2 * m_theme->m_tab_button_vertical_padding + 2*m_padding);
+                    font_size() + 2 * m_theme->m_tab_button_vertical_padding);
 }
 
 void TabWidgetBase::draw(NVGcontext* ctx) {
