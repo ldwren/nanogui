@@ -590,9 +590,8 @@ int main(int /* argc */, char ** /* argv */) {
         /* scoped variables */ {
             ref<ExampleApplication> app = new ExampleApplication();
             app->dec_ref();
-            app->draw_all();
             app->set_visible(true);
-            nanogui::run(RunMode::VSync);
+            nanogui::run(RunMode::Eager);
         }
 
         nanogui::shutdown();

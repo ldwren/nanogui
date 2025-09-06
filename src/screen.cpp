@@ -18,6 +18,7 @@
 #include <nanogui/popup.h>
 #include <nanogui/metal.h>
 #include <nanogui/shader.h>
+#include "rtimer.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -68,6 +69,9 @@
 #endif
 
 NAMESPACE_BEGIN(nanogui)
+
+/// Delay in seconds before showing tooltips
+#define TOOLTIP_DELAY_SEC 0.2f
 
 std::vector<std::pair<GLFWwindow *, Screen *>> __nanogui_screens;
 
@@ -696,6 +700,19 @@ void Screen::draw_setup() {
         bool vsync = run_mode == RunMode::VSync;
         metal_window_set_vsync(m_nswin, vsync);
 #endif
+        // Create or destroy tooltip timer based on run mode
+        if (run_mode == RunMode::Lazy && !m_tooltip_timer) {
+            m_tooltip_timer = new RestartableTimer(
+                [this]() {
+                    m_tooltip_force_visible = true;
+                    redraw();
+                },
+                std::chrono::milliseconds(int(TOOLTIP_DELAY_SEC * 1000))
+            );
+        } else if (run_mode != RunMode::Lazy && m_tooltip_timer) {
+            m_tooltip_timer.reset();
+            m_tooltip_force_visible = false;
+        }
         m_last_run_mode = run_mode;
     }
 
@@ -771,70 +788,82 @@ void Screen::draw_widgets() {
     nvgBeginFrame(m_nvg_context, m_size[0], m_size[1], m_pixel_ratio);
 
     draw(m_nvg_context);
-
-    double elapsed = glfwGetTime() - m_last_interaction;
-
-    if (elapsed > 0.2f) {
-        /* Draw tooltips */
-        const Widget *widget = find_widget(m_mouse_pos);
-        while (widget && widget->tooltip().empty())
-            widget = widget->parent();
-
-        if (widget && !widget->tooltip().empty()) {
-            int tooltip_width = 180;
-
-            float bounds[4];
-            nvgFontFace(m_nvg_context, "sans");
-            nvgFontSize(m_nvg_context, 15.0f);
-            nvgTextAlign(m_nvg_context, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-            nvgTextLineHeight(m_nvg_context, 1.1f);
-            Vector2i pos = widget->absolute_position() +
-                           Vector2i(widget->width() / 2, widget->height() + 10);
-
-            std::string_view tooltip = widget->tooltip();
-            nvgTextBounds(m_nvg_context, pos.x(), pos.y(),
-                          tooltip.data(), tooltip.data() + tooltip.size(), bounds);
-
-            int h = (bounds[2] - bounds[0]) / 2;
-            if (h > tooltip_width / 2) {
-                nvgTextAlign(m_nvg_context, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-                nvgTextBoxBounds(m_nvg_context, pos.x(), pos.y(), tooltip_width,
-                                tooltip.data(), tooltip.data() + tooltip.size(), bounds);
-
-                h = (bounds[2] - bounds[0]) / 2;
-            }
-            int shift = 0;
-
-            if (pos.x() - h - 8 < 0) {
-                /* Keep tooltips on screen */
-                shift = pos.x() - h - 8;
-                pos.x() -= shift;
-                bounds[0] -= shift;
-                bounds[2] -= shift;
-            }
-
-            nvgGlobalAlpha(m_nvg_context, 0.8f);
-
-            nvgBeginPath(m_nvg_context);
-            nvgFillColor(m_nvg_context, Color(0, 255));
-            nvgRoundedRect(m_nvg_context, bounds[0] - 4 - h, bounds[1] - 4,
-                           (int) (bounds[2] - bounds[0]) + 8,
-                           (int) (bounds[3] - bounds[1]) + 8, 3);
-
-            int px = (int) ((bounds[2] + bounds[0]) / 2) - h + shift;
-            nvgMoveTo(m_nvg_context, px, bounds[1] - 10);
-            nvgLineTo(m_nvg_context, px + 7, bounds[1] + 1);
-            nvgLineTo(m_nvg_context, px - 7, bounds[1] + 1);
-            nvgFill(m_nvg_context);
-
-            nvgFillColor(m_nvg_context, Color(255, 255));
-            nvgFontBlur(m_nvg_context, 0.0f);
-            nvgTextBox(m_nvg_context, pos.x() - h, pos.y(), tooltip_width,
-                       tooltip.data(), tooltip.data() + tooltip.size());
-        }
-    }
+    draw_tooltip();
 
     nvgEndFrame(m_nvg_context);
+}
+
+void Screen::draw_tooltip() {
+    // Should we show a tooltip
+    if (m_tooltip_timer) {
+        // When using a timer thread (in lazy rendering mode), consult a flag
+        if (!m_tooltip_force_visible)
+            return;
+    } else {
+        // Otherwise, decide based on timing information
+        double elapsed = glfwGetTime() - m_last_interaction;
+        if (elapsed <= TOOLTIP_DELAY_SEC)
+            return;
+    }
+
+    // Draw tooltips
+    const Widget *widget = find_widget(m_mouse_pos);
+    while (widget && widget->tooltip().empty())
+        widget = widget->parent();
+
+    if (!widget || widget->tooltip().empty())
+        return;
+
+    int tooltip_width = 180;
+
+    float bounds[4];
+    nvgFontFace(m_nvg_context, "sans");
+    nvgFontSize(m_nvg_context, 15.0f);
+    nvgTextAlign(m_nvg_context, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+    nvgTextLineHeight(m_nvg_context, 1.1f);
+    Vector2i pos = widget->absolute_position() +
+                   Vector2i(widget->width() / 2, widget->height() + 10);
+
+    std::string_view tooltip = widget->tooltip();
+    nvgTextBounds(m_nvg_context, pos.x(), pos.y(),
+                  tooltip.data(), tooltip.data() + tooltip.size(), bounds);
+
+    int h = (bounds[2] - bounds[0]) / 2;
+    if (h > tooltip_width / 2) {
+        nvgTextAlign(m_nvg_context, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+        nvgTextBoxBounds(m_nvg_context, pos.x(), pos.y(), tooltip_width,
+                        tooltip.data(), tooltip.data() + tooltip.size(), bounds);
+
+        h = (bounds[2] - bounds[0]) / 2;
+    }
+    int shift = 0;
+
+    if (pos.x() - h - 8 < 0) {
+        // Keep tooltips on screen
+        shift = pos.x() - h - 8;
+        pos.x() -= shift;
+        bounds[0] -= shift;
+        bounds[2] -= shift;
+    }
+
+    nvgGlobalAlpha(m_nvg_context, 0.8f);
+
+    nvgBeginPath(m_nvg_context);
+    nvgFillColor(m_nvg_context, Color(0, 255));
+    nvgRoundedRect(m_nvg_context, bounds[0] - 4 - h, bounds[1] - 4,
+                   (int) (bounds[2] - bounds[0]) + 8,
+                   (int) (bounds[3] - bounds[1]) + 8, 3);
+
+    int px = (int) ((bounds[2] + bounds[0]) / 2) - h + shift;
+    nvgMoveTo(m_nvg_context, px, bounds[1] - 10);
+    nvgLineTo(m_nvg_context, px + 7, bounds[1] + 1);
+    nvgLineTo(m_nvg_context, px - 7, bounds[1] + 1);
+    nvgFill(m_nvg_context);
+
+    nvgFillColor(m_nvg_context, Color(255, 255));
+    nvgFontBlur(m_nvg_context, 0.0f);
+    nvgTextBox(m_nvg_context, pos.x() - h, pos.y(), tooltip_width,
+               tooltip.data(), tooltip.data() + tooltip.size());
 }
 
 bool Screen::keyboard_event(int key, int scancode, int action, int modifiers) {
@@ -863,8 +892,8 @@ bool Screen::resize_event(const Vector2i& size) {
 }
 
 void Screen::redraw() {
-    glfwPostEmptyEvent();
     m_redraw = true;
+    glfwPostEmptyEvent();
 }
 
 void Screen::cursor_pos_callback_event(double x, double y) {
@@ -880,7 +909,15 @@ void Screen::cursor_pos_callback_event(double x, double y) {
     Vector2i p((int) x, (int) y);
     Vector2f p_f((float) x, (float) y);
 
+    // When a tooltip is currently being shown (in lazy rendering mode), we must
+    // redraw to hide it following the mouse motion.
+    if (m_tooltip_timer && m_tooltip_force_visible) {
+        m_tooltip_force_visible = false;
+        m_redraw = true;
+    }
+
     m_last_interaction = glfwGetTime();
+
     try {
 
         bool ret = false;
@@ -900,6 +937,19 @@ void Screen::cursor_pos_callback_event(double x, double y) {
         if (!ret) {
             ret = mouse_motion_event(p, p - m_mouse_pos, m_mouse_state, m_modifiers);
             ret = mouse_motion_event_f(p, p_f - m_mouse_pos_f, m_mouse_state, m_modifiers);
+        }
+
+        // In lazy rendering mode, inform a background tooltip rendering
+        // thread on whether to send redraw events.
+        if (m_tooltip_timer) {
+            const Widget *tooltip_widget = find_widget(p);
+            while (tooltip_widget && tooltip_widget->tooltip().empty())
+                tooltip_widget = tooltip_widget->parent();
+
+            if (tooltip_widget && !tooltip_widget->tooltip().empty())
+                m_tooltip_timer->restart();
+            else
+                m_tooltip_timer->clear();
         }
 
         m_mouse_pos = p;
@@ -1125,14 +1175,6 @@ void Screen::move_window_to_front(Window *window) {
     } while (changed);
 }
 
-bool Screen::tooltip_fade_in_progress() const {
-    double elapsed = glfwGetTime() - m_last_interaction;
-    if (elapsed < 0.25f || elapsed > 1.25f)
-        return false;
-    /* Temporarily increase the frame rate to fade in the tooltip */
-    const Widget *widget = find_widget(m_mouse_pos);
-    return widget && !widget->tooltip().empty();
-}
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
 uint32_t Screen::framebuffer_handle() const {

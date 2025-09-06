@@ -21,6 +21,7 @@
 NAMESPACE_BEGIN(nanogui)
 
 class Texture;
+class RestartableTimer;
 
 /**
  * \class Screen screen.h nanogui/screen.h
@@ -249,9 +250,6 @@ public:
     void set_shutdown_glfw(bool v) { m_shutdown_glfw = v; }
     bool shutdown_glfw() { return m_shutdown_glfw; }
 
-    /// Is a tooltip currently fading in?
-    bool tooltip_fade_in_progress() const;
-
     using Widget::perform_layout;
 
     /// Compute the layout of all widgets
@@ -298,6 +296,7 @@ public:
     void center_window(Window *window);
     void move_window_to_front(Window *window);
     void draw_widgets();
+    void draw_tooltip();
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
     uint32_t framebuffer_handle() const;
@@ -331,6 +330,8 @@ protected:
     std::function<void(Vector2i)> m_resize_callback;
     RunMode m_last_run_mode;
     ref<Texture> m_depth_stencil_texture;
+    ref<RestartableTimer> m_tooltip_timer;
+    bool m_tooltip_force_visible = false;
 #if defined(NANOGUI_USE_METAL)
     void *m_metal_texture = nullptr;
     void *m_metal_drawable = nullptr;
