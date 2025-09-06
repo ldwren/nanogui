@@ -499,6 +499,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 
     if (!m_nvg_context)
         throw std::runtime_error("Could not initialize NanoVG!");
+    nvgSetDevicePixelRatio(m_nvg_context, m_pixel_ratio);
 
     m_visible = glfwGetWindowAttrib(window, GLFW_VISIBLE) != 0;
     set_theme(new Theme(m_nvg_context));
@@ -549,10 +550,6 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
         );
     }
 #endif
-
-    /// Fixes retina display-related font rendering issue (#185)
-    nvgBeginFrame(m_nvg_context, m_size[0], m_size[1], m_pixel_ratio);
-    nvgEndFrame(m_nvg_context);
 }
 
 Screen::~Screen() {
