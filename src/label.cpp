@@ -27,7 +27,7 @@ Label::Label(Widget *parent, std::string_view caption, std::string_view font, in
 void Label::set_theme(Theme *theme) {
     Widget::set_theme(theme);
     if (m_theme) {
-        m_font_size = m_theme->m_standard_font_size;
+        set_font_size(m_theme->m_standard_font_size);
         m_color = m_theme->m_text_color;
     }
 }

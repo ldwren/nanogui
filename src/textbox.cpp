@@ -57,7 +57,7 @@ void TextBox::set_editable(bool editable) {
 void TextBox::set_theme(Theme *theme) {
     Widget::set_theme(theme);
     if (m_theme)
-        m_font_size = m_theme->m_text_box_font_size;
+        set_font_size(m_theme->m_text_box_font_size);
 }
 
 Vector2i TextBox::preferred_size_impl(NVGcontext *ctx) const {
