@@ -35,7 +35,7 @@ Vector2i Button::preferred_size_impl(NVGcontext *ctx) const {
             nvgFontFace(ctx, "icons");
             nvgFontSize(ctx, ih);
             iw = nvgTextBounds(ctx, 0, 0, utf8(m_icon).data(), nullptr, nullptr)
-                + m_size.y() * 0.15f;
+                + font_size * 0.15f;
         } else {
             int w, h;
             ih *= 0.9f;
@@ -189,7 +189,7 @@ void Button::draw(NVGcontext *ctx) {
             iw = w * ih / h;
         }
         if (m_caption != "")
-            iw += m_size.y() * 0.15f;
+            iw += font_size * 0.15f;
         nvgFillColor(ctx, text_color);
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         Vector2f icon_pos = center;

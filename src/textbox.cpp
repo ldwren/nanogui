@@ -45,7 +45,8 @@ TextBox::TextBox(Widget *parent, std::string_view value)
       m_text_offset(0),
       m_last_click(0),
       m_solid_color(Color(0, 0, 0, 0)) {
-    if (m_theme) m_font_size = m_theme->m_text_box_font_size;
+    if (m_theme)
+        m_font_size = m_theme->m_text_box_font_size;
     m_icon_extra_scale = .8f;
 }
 
@@ -61,10 +62,10 @@ void TextBox::set_theme(Theme *theme) {
 }
 
 Vector2i TextBox::preferred_size_impl(NVGcontext *ctx) const {
-    Vector2i size(0, m_font_size * 1.4f);
+    Vector2i size(0, font_size() * 1.4f);
 
     nvgFontFace(ctx, "sans");
-    nvgFontSize(ctx, m_font_size);
+    nvgFontSize(ctx, font_size());
 
     float uw = 0;
     if (m_units_image > 0) {
@@ -129,7 +130,7 @@ void TextBox::draw(NVGcontext* ctx) {
     nvgStrokeColor(ctx, Color(0, 48));
     nvgStroke(ctx);
 
-    nvgFontSize(ctx, m_font_size);
+    nvgFontSize(ctx, font_size());
     nvgFontFace(ctx, "sans");
     Vector2i draw_pos(m_pos.x(), m_pos.y() + m_size.y() * 0.5f + 1);
 
@@ -191,7 +192,7 @@ void TextBox::draw(NVGcontext* ctx) {
             nvgText(ctx, icon_pos.x(), icon_pos.y(), icon.data(), nullptr);
         }
 
-        nvgFontSize(ctx, m_font_size);
+        nvgFontSize(ctx, font_size());
         nvgFontFace(ctx, "sans");
     }
 
@@ -210,7 +211,7 @@ void TextBox::draw(NVGcontext* ctx) {
             break;
     }
 
-    nvgFontSize(ctx, m_font_size);
+    nvgFontSize(ctx, font_size());
     nvgFillColor(ctx, m_enabled && (!m_committed || !m_value.empty()) ?
         m_theme->m_text_color :
         m_theme->m_disabled_text_color);

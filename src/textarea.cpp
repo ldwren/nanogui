@@ -45,27 +45,29 @@ void TextArea::append(std::string_view text) {
         m_blocks.push_back(Block { m_offset, width, std::move(line), m_foreground_color });
 
         m_offset.x() += width;
-        m_max_size = max(m_max_size, m_offset);
+        m_max_size.x() = std::max(m_max_size.x(), m_offset.x());
 
-        if (line_end < end && *line_end == '\n') {
+        if (line_end < end && *line_end == '\n')
             m_offset = Vector2i(0, m_offset.y() + font_size());
-            m_max_size = max(m_max_size, m_offset);
-        }
 
         cur = line_end + 1;
     }
 
+    if (!m_blocks.empty())
+        m_max_size.y() = m_offset.y() + font_size();
+
+    preferred_size_changed();
+
     VScrollPanel *vscroll = dynamic_cast<VScrollPanel *>(m_parent);
     if (vscroll)
         vscroll->perform_layout(ctx);
-
-    preferred_size_changed();
 }
 
 void TextArea::clear() {
     m_blocks.clear();
-    m_offset = m_max_size = 0;
-    m_selection_start = m_selection_end = -1;
+    m_offset = Vector2i(0, 0);
+    m_max_size = Vector2i(0, 0);
+    m_selection_start = m_selection_end = Vector2i(-1, -1);
     preferred_size_changed();
 }
 
