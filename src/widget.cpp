@@ -77,9 +77,8 @@ Vector2i Widget::preferred_size(NVGcontext *ctx) const {
                 fprintf(stderr,
                         "NanoGUI: widget %p of type %s returned an unexpected preferred "
                         "size. It appears that something updated its state but did not call "
-                        "preferred_size_changed() (size=[%i, %i], ref=[%i, %i]!\n",
+                        "preferred_size_changed() (size=[%i, %i], ref=[%i, %i])!\n",
                         this, typeid(*this).name(), result.x(), result.y(), ref.x(), ref.y());
-                abort();
             }
 #endif
         }
