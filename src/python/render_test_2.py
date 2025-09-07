@@ -124,7 +124,7 @@ class MyScreen(ng.Screen):
 
             model = ng.Matrix4f.rotate(
                 [0, 1, 0],
-                glfw.getTime()
+                glfw.GetTime()
             )
 
             fbsize = self.framebuffer_size()

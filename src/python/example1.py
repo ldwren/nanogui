@@ -455,7 +455,7 @@ class TestApp(ng.Screen):
         s = self.size()
         with self.render_pass:
             mvp = ng.Matrix4f.scale([s[1] / float(s[0]) * 0.25, 0.25, 0.25]) @ \
-                  ng.Matrix4f.rotate([0, 0, 1], glfw.getTime())
+                  ng.Matrix4f.rotate([0, 0, 1], glfw.GetTime())
             self.shader.set_buffer("mvp", mvp.T)
             with self.shader:
                 self.shader.draw_array(ng.Shader.PrimitiveType.Triangle, 0, 6, True)

@@ -25,7 +25,7 @@ void register_basics(nb::module_ &m) {
 
     nb::class_<Popup, Window, PyPopup> popup(m, "Popup", D(Popup));
     popup
-        .def(nb::init<Widget *, Window *>(), "parent"_a, "parent_window"_a, D(Popup, Popup))
+        .def(nb::init<Widget *, Window *>(), "parent"_a, "parent_window"_a.none(), D(Popup, Popup))
         .def("anchor_pos", &Popup::anchor_pos, D(Popup, anchor_pos))
         .def("set_anchor_pos", &Popup::set_anchor_pos, D(Popup, set_anchor_pos))
         .def("anchor_offset", &Popup::anchor_offset, D(Popup, anchor_offset))

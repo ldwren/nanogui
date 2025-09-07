@@ -66,8 +66,8 @@ void register_layout(nb::module_ &m) {
         m, "AdvancedGridLayout", D(AdvancedGridLayout));
 
     adv_grid_layout
-        .def(nb::init<const std::vector<int> &, const std::vector<int> &>(),
-             "widths"_a, "heights"_a,
+        .def(nb::init<const std::vector<int> &, const std::vector<int> &, int>(),
+             "widths"_a, "heights"_a, "margin"_a = 0,
              D(AdvancedGridLayout, AdvancedGridLayout))
         .def("row_count", &AdvancedGridLayout::row_count, D(AdvancedGridLayout, row_count))
         .def("col_count", &AdvancedGridLayout::col_count, D(AdvancedGridLayout, col_count))

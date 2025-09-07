@@ -161,7 +161,14 @@ void register_glfw(nb::module_ &m) {
         nb::module_ m2 = m.def_submodule("glfw");
         for (Key k: keys)
             m2.attr(k.name) = k.value;
-        m2.def("getTime", &glfwGetTime);
+
+        m2.attr("DONT_CARE") = GLFW_DONT_CARE;
+
+        m2.def("GetTime", &glfwGetTime);
+        m2.def("SetWindowSizeLimits", &glfwSetWindowSizeLimits,
+               "window"_a, "min_width"_a, "min_height"_a, "max_width"_a, "max_height"_a,
+               "Set the size limits of the specified window");
+        nb::class_<GLFWwindow>(m2, "Window");
     }
 }
 

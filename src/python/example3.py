@@ -151,7 +151,7 @@ class MyCanvas(ng.Canvas):
 
         model = ng.Matrix4f.rotate(
             [0, 1, 0],
-            glfw.getTime()
+            glfw.GetTime()
         )
 
         model2 = ng.Matrix4f.rotate(
