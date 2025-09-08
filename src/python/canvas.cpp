@@ -2,6 +2,7 @@
 
 #include "python.h"
 #include <nanobind/stl/array.h>
+#include <array>
 
 class PyCanvas : public Canvas {
 public:

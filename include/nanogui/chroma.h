@@ -17,7 +17,6 @@
 #include <nanogui/widget.h>
 
 #include <array>
-#include <string_view>
 
 NAMESPACE_BEGIN(nanogui)
 
