@@ -312,8 +312,8 @@ file_dialog(Widget *parent,
             NFD_PathSet_FreeEnum(&enumerator);
     });
 
-    if (!NFD_GetNativeWindowFromGLFWWindow(parent->screen()->glfw_window(), &parent_window))
-        throw std::runtime_error("nanogui::file_dialog(): could not obtain native window handle");
+    NFD_GetNativeWindowFromGLFWWindow(parent->screen()->glfw_window(),
+                                      &parent_window);
 
     switch (type) {
         case FileDialogType::Save: {
@@ -363,8 +363,6 @@ file_dialog(Widget *parent,
     else if (result != NFD_OKAY)
         throw std::runtime_error("nanogui::file_dialog(): dialog error: " + std::string(NFD_GetError()));
 
-    if (!NFD_PathSet_GetEnum(out_paths, &enumerator))
-        throw std::runtime_error("nanogui::file_dialog(): could not obtain enumerator: " + std::string(NFD_GetError()));
     enumerator_set = true;
 
     std::vector<std::string> paths;
@@ -378,6 +376,8 @@ file_dialog(Widget *parent,
 
         case FileDialogType::PickFolderMultiple:
         case FileDialogType::OpenMultiple:
+            if (!NFD_PathSet_GetEnum(out_paths, &enumerator))
+                throw std::runtime_error("nanogui::file_dialog(): could not obtain enumerator: " + std::string(NFD_GetError()));
             while (NFD_PathSet_EnumNextU8(&enumerator, &out_path) && out_path)
                 paths.emplace_back(out_path);
             break;
