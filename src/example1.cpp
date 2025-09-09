@@ -572,6 +572,12 @@ public:
         m_shader->end();
 
         m_render_pass->end();
+
+        if (m_frame_index % 60 == 59) {
+            char caption[128];
+            snprintf(caption, 128, "NanoGUI test (%.2f FPS)", 1.f / m_frame_timer.value());
+            set_caption(caption);
+        }
     }
 private:
     ProgressBar *m_progress;
@@ -591,7 +597,7 @@ int main(int /* argc */, char ** /* argv */) {
             ref<ExampleApplication> app = new ExampleApplication();
             app->dec_ref();
             app->set_visible(true);
-            nanogui::run(RunMode::Eager);
+            nanogui::run(RunMode::VSync);
         }
 
         nanogui::shutdown();

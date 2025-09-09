@@ -864,6 +864,20 @@ static const char *__doc_nanogui_Cursor_IBeam = R"doc(< The I-beam cursor.)doc";
 
 static const char *__doc_nanogui_Cursor_VResize = R"doc(< The vertical resize cursor.)doc";
 
+static const char *__doc_nanogui_EMA = R"doc(Exponentially weighted moving average accumulator with bias correction)doc";
+
+static const char *__doc_nanogui_EMA_EMA = R"doc(Construct with given weight for old samples (default 0.983 = ~1 second at 60 FPS))doc";
+
+static const char *__doc_nanogui_EMA_put = R"doc(Add a new sample to the accumulator)doc";
+
+static const char *__doc_nanogui_EMA_reset = R"doc(Reset the accumulator to initial state)doc";
+
+static const char *__doc_nanogui_EMA_sample_count = R"doc(Get the number of samples accumulated)doc";
+
+static const char *__doc_nanogui_EMA_value = R"doc(Get the bias-corrected accumulated value)doc";
+
+static const char *__doc_nanogui_EMA_weight = R"doc(Get the current weight)doc";
+
 static const char *__doc_nanogui_FloatBox =
 R"doc(\class FloatBox textbox.h nanogui/textbox.h
 
@@ -1895,6 +1909,12 @@ finally draw_teardown().
 
 See also:
     redraw)doc";
+
+static const char *__doc_nanogui_Screen_frame_index =
+    "Get the index of the last (or current) frame being rendered";
+
+static const char *__doc_nanogui_Screen_frame_time =
+    "Get a smoothed estimate of the rendering time per frame (second-based)";
 
 static const char *__doc_nanogui_Screen_draw_contents =
 R"doc(Calls clear() and draws the window contents --- put your rendering

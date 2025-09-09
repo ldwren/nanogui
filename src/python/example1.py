@@ -12,7 +12,6 @@
 import nanogui as ng
 import math
 import time
-import gc
 import numpy as np
 
 from nanogui import glfw, icons
@@ -460,6 +459,9 @@ class TestApp(ng.Screen):
             with self.shader:
                 self.shader.draw_array(ng.Shader.PrimitiveType.Triangle, 0, 6, True)
 
+        if self.frame_index() % 60 == 59:
+            self.set_caption("NanoGUI test (%.2f FPS)" % (1 / self.frame_time()))
+
 
     def keyboard_event(self, key, scancode, action, modifiers):
         if super(TestApp, self).keyboard_event(key, scancode,
@@ -470,12 +472,12 @@ class TestApp(ng.Screen):
             return True
         return False
 
-if __name__ == "__main__":
+def main():
     ng.init()
     test = TestApp()
-    test.draw_all()
     test.set_visible(True)
     ng.run()
-    del test
-    gc.collect()
     ng.shutdown()
+
+if __name__ == "__main__":
+    main()

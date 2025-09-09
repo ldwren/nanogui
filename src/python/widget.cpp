@@ -238,6 +238,8 @@ void register_widget(nb::module_ &m) {
         .def("nvg_flush", &Screen::nvg_flush, D(Screen, nvg_flush))
         .def("mouse_motion_event_f", &Screen::mouse_motion_event_f, "p"_a, "rel"_a,
              "button"_a, "modifiers"_a, D(Screen, mouse_motion_event_f))
+        .def("frame_time", &Screen::frame_time, D(Screen, frame_time))
+        .def("frame_index", &Screen::frame_index, D(Screen, frame_index))
 #if defined(NANOGUI_USE_METAL)
         .def("metal_layer", &Screen::metal_layer)
         .def("metal_texture", &Screen::metal_texture)

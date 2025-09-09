@@ -510,7 +510,9 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
     m_mouse_pos = Vector2i(0);
     m_mouse_state = m_modifiers = 0;
     m_drag_active = false;
-    m_last_interaction = glfwGetTime();
+    m_last_interaction = 0.0;
+    m_last_draw = 0.0;
+    m_frame_index = 0;
     m_redraw = true;
     __nanogui_screens.emplace_back(m_glfw_window, this);
 
@@ -761,6 +763,11 @@ void Screen::draw_all() {
 #if defined(NANOGUI_USE_METAL)
         void *pool = autorelease_init();
 #endif
+        float current_time = glfwGetTime();
+        if (m_last_draw != 0.0)
+            m_frame_timer.put(current_time - m_last_draw);
+        m_last_draw = current_time;
+        m_frame_index++;
 
         draw_setup();
         draw_contents();
@@ -801,7 +808,7 @@ void Screen::draw_tooltip() {
             return;
     } else {
         // Otherwise, decide based on timing information
-        double elapsed = glfwGetTime() - m_last_interaction;
+        double elapsed = m_last_draw - m_last_interaction;
         if (elapsed <= TOOLTIP_DELAY_SEC)
             return;
     }

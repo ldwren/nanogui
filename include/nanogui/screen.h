@@ -17,6 +17,7 @@
 #include <nanogui/widget.h>
 #include <nanogui/texture.h>
 #include <nanogui/colorpass.h>
+#include <nanogui/ema.h>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -220,6 +221,12 @@ public:
     /// Does the framebuffer use a floating point representation
     bool has_float_buffer() const { return m_float_buffer; }
 
+    /// Get the index of the last (or current) frame being rendered
+    uint64_t frame_index() const { return m_frame_index; }
+
+    /// Get a smoothed estimate of the rendering time per frame (second-based)
+    double frame_time() const { return m_frame_timer.value(); }
+
     /// Does the screen apply color management as a post processing shader?
     bool applies_color_management() const {
 #if defined(NANOGUI_USE_METAL)
@@ -316,6 +323,7 @@ protected:
     bool m_drag_active;
     Widget *m_drag_widget = nullptr;
     double m_last_interaction;
+    double m_last_draw;
     Color m_background;
     std::string m_caption;
     bool m_shutdown_glfw;
@@ -332,6 +340,8 @@ protected:
     ref<Texture> m_depth_stencil_texture;
     ref<RestartableTimer> m_tooltip_timer;
     bool m_tooltip_force_visible = false;
+    EMA<double> m_frame_timer;
+    uint64_t m_frame_index;
 #if defined(NANOGUI_USE_METAL)
     void *m_metal_texture = nullptr;
     void *m_metal_drawable = nullptr;
