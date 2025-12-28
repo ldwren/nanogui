@@ -266,6 +266,19 @@ Shader::~Shader() {
 #if defined(NANOGUI_USE_OPENGL)
     CHK(glDeleteVertexArrays(1, &p->vertex_array_handle));
 #endif
+
+    // Delete any remaining buffers
+    for ( auto it = p->buffers.begin( ); it != p->buffers.end( ); ++it ) {
+       Buffer&            buf = it.value( );
+       if ( buf.type == UniformBuffer )
+       {
+          if ( buf.buffer ) {
+             delete[] (uint8_t*)buf.buffer;
+             buf.buffer = nullptr;
+          }
+       }
+    }  
+
     delete p;
 }
 
