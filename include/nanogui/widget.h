@@ -19,6 +19,7 @@ NAMESPACE_BEGIN(nanogui)
 
 enum class Cursor; // do not put a docstring, this is already documented
 
+
 /**
  * \class Widget widget.h nanogui/widget.h
  *
@@ -298,7 +299,9 @@ public:
     /// Draw the widget (and all child widgets)
     virtual void draw(NVGcontext *ctx);
 
-protected:
+    void set_name( const std::string& name ) { m_name = name; }
+
+  protected:
     /// Internal implementation of preferred size computation
     virtual Vector2i preferred_size_impl(NVGcontext *ctx) const;
 
@@ -314,7 +317,7 @@ protected:
      */
     float icon_scale() const { return m_theme->m_icon_scale * m_icon_extra_scale; }
 
-private:
+  private:
     /**
      * Convenience function to share logic between both signatures of
      * ``removeChild``.
@@ -391,6 +394,10 @@ protected:
      */
     float m_icon_extra_scale;
     Cursor m_cursor;
+
+    std::string     m_name = "";
+    uint32_t m_ID = 0;
+    static uint32_t m_nextID;
 };
 
 NAMESPACE_END(nanogui)

@@ -23,7 +23,10 @@
 
 // #define NANOGUI_SHOW_WIDGET_BOUNDS 1
 
+
 NAMESPACE_BEGIN(nanogui)
+
+uint32_t Widget::m_nextID = 0;
 
 Widget::Widget(Widget *parent)
     : m_parent(nullptr), m_theme(nullptr), m_layout(nullptr),
@@ -32,6 +35,7 @@ Widget::Widget(Widget *parent)
       m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow) {
     if (parent)
         parent->add_child(this);
+    m_ID = m_nextID++;
 }
 
 Widget::~Widget() {
